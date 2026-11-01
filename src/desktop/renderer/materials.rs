@@ -46,6 +46,8 @@ impl From<earth_math::astro::GpuSolarEclipse> for EclipseSettings {
 }
 
 const GROUND_SHADER: Handle<Shader> = uuid_handle!("8ec76db7-b528-499e-91a7-fad778eb3e7d");
+const SKY_SHADER: Handle<Shader> = uuid_handle!("2b7a85db-7c89-4241-81ea-43cb75c80c17");
+const STAR_SHADER: Handle<Shader> = uuid_handle!("f8af15a9-d596-4604-ae28-6d9d7447ae17");
 const MOON_SHADER: Handle<Shader> = uuid_handle!("976c3c68-71e6-4921-aea0-028aeb83e3c2");
 const GRASS_SHADER: Handle<Shader> = uuid_handle!("9e711805-c9c8-48d6-97b9-7ed9567ec4cb");
 const WATER_SHADER: Handle<Shader> = uuid_handle!("a9330ea6-37b1-460b-b925-1fb9eecbdcaf");
@@ -144,7 +146,13 @@ pub type WaterMaterial = ExtendedMaterial<StandardMaterial, WaterExtension>;
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct MoonExtension {
     #[uniform(100)]
-    pub illumination: Vec4,
+    pub settings: super::lunar::LunarSettings,
+    #[texture(101)]
+    #[sampler(102)]
+    pub color: Handle<Image>,
+    #[texture(103)]
+    #[sampler(104)]
+    pub normal: Handle<Image>,
 }
 impl MaterialExtension for MoonExtension {
     fn fragment_shader() -> ShaderRef {
@@ -152,6 +160,55 @@ impl MaterialExtension for MoonExtension {
     }
 }
 pub type MoonMaterial = ExtendedMaterial<StandardMaterial, MoonExtension>;
+
+#[derive(Clone, Copy, Debug, Default, ShaderType)]
+pub struct StarSettings {
+    pub phase_sin: Vec4,
+    pub phase_cos: Vec4,
+    /// Local geodetic up and the conditional reference zenith variance.
+    pub up: Vec4,
+    pub visibility: Vec4,
+}
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct StarExtension {
+    #[uniform(100)]
+    pub settings: StarSettings,
+}
+impl MaterialExtension for StarExtension {
+    fn vertex_shader() -> ShaderRef {
+        STAR_SHADER.into()
+    }
+    fn specialize(
+        _pipeline: &MaterialExtensionPipeline,
+        descriptor: &mut RenderPipelineDescriptor,
+        layout: &MeshVertexBufferLayoutRef,
+        _key: MaterialExtensionKey<Self>,
+    ) -> Result<(), SpecializedMeshPipelineError> {
+        descriptor.vertex.buffers = vec![layout.0.get_layout(&[
+            Mesh::ATTRIBUTE_POSITION.at_shader_location(0),
+            Mesh::ATTRIBUTE_NORMAL.at_shader_location(1),
+            Mesh::ATTRIBUTE_UV_0.at_shader_location(2),
+            Mesh::ATTRIBUTE_UV_1.at_shader_location(3),
+            Mesh::ATTRIBUTE_COLOR.at_shader_location(5),
+        ])?];
+        Ok(())
+    }
+    fn fragment_shader() -> ShaderRef {
+        STAR_SHADER.into()
+    }
+}
+pub type StarMaterial = ExtendedMaterial<StandardMaterial, StarExtension>;
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
+pub struct SkyExtension {
+    #[uniform(100)]
+    pub unused: Vec4,
+}
+impl MaterialExtension for SkyExtension {
+    fn fragment_shader() -> ShaderRef {
+        SKY_SHADER.into()
+    }
+}
+pub type SkyMaterial = ExtendedMaterial<StandardMaterial, SkyExtension>;
 
 #[derive(Clone, Copy, Debug, ShaderType)]
 pub struct GrassSettings {
@@ -235,12 +292,38 @@ pub fn grass_mesh(data: earth_math::rendering::GrassRenderMesh) -> (Mesh, Aabb) 
 }
 
 pub fn install(app: &mut App) {
+    app.add_plugins(MaterialPlugin::<SkyMaterial>::default());
+    app.world_mut()
+        .resource_mut::<Assets<Shader>>()
+        .insert(
+            SKY_SHADER.id(),
+            Shader::from_wesl(
+                include_str!("../shaders/sky.wesl"),
+                "ancient_earth/sky.wesl",
+            ),
+        )
+        .expect("insert original sky mask shader");
     app.add_plugins((
         MaterialPlugin::<GroundMaterial>::default(),
         MaterialPlugin::<MoonMaterial>::default(),
+        MaterialPlugin::<StarMaterial>::default(),
         MaterialPlugin::<GrassMaterial>::default(),
         MaterialPlugin::<WaterMaterial>::default(),
     ));
+    app.world_mut()
+        .resource_mut::<Assets<Shader>>()
+        .insert(
+            STAR_SHADER.id(),
+            Shader::from_wesl(
+                format!(
+                    "{}\n{}",
+                    include_str!("../shaders/stars.wesl"),
+                    include_str!("../shaders/stars_common.wesl")
+                ),
+                "ancient_earth/stars.wesl",
+            ),
+        )
+        .expect("insert original star shader");
     app.world_mut()
         .resource_mut::<Assets<Shader>>()
         .insert(
@@ -260,7 +343,11 @@ pub fn install(app: &mut App) {
         .insert(
             MOON_SHADER.id(),
             Shader::from_wesl(
-                include_str!("../shaders/moon.wesl"),
+                format!(
+                    "{}\n{}",
+                    include_str!("../shaders/moon.wesl"),
+                    include_str!("../shaders/lunar_common.wesl")
+                ),
                 "ancient_earth/moon.wesl",
             ),
         )

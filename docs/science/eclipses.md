@@ -38,9 +38,9 @@ This follows the reception geometry documented in [NAIF's occultation routine](h
 
 For the eye, the eclipse field uses the same retarded centers and observer aberration as the displayed apparent body spheres. Aberration is the common relativistic direction transformation already documented in [astronomy.md](astronomy.md). The display keeps sphere radii and retarded distances; it does not separately transform every limb ray or solve a retarded event for every surface element. NAIF's general occultation routine omits stellar aberration because it does not improve the occultation classification. Here the same center-direction convention is retained to keep the eye readout and displayed disks consistent.
 
-When F9 holds the eye in Earth-centered nonrotating axes, its aberration uses Earth's orbital translation without terrestrial co-rotation. The observer eclipse field follows that convention, while the independent surface field continues to use co-rotating ground velocities. [Reference frames](reference-frames.md) explains this distinction and the kinematic scope.
+Inspection sampling uses actual-eye light time and parallax with a bounded WGS84 h=0 observatory-spin reference at the eye's geodetic latitude/longitude. This reference is not the virtual camera's physical velocity. When F9 holds the eye in Earth-centered nonrotating axes, its aberration uses Earth's orbital translation without terrestrial spin. The observer eclipse field follows that convention, while the independent surface field continues to use actual co-rotating ground velocities. The inspection eye field has a fixed receiver-reference velocity at its anchor; it is not reused as a physical surface-velocity field. [Reference frames](reference-frames.md) explains this distinction and the kinematic scope.
 
-Rendering needs a spatial field across Earth, not a single brightness multiplier at the eye. At each new simulation sample, the field retains the anchor observer, target vectors `r₀` at their separate emission times, and target **barycentric** velocities `v` at those times, all expressed in common Earth-fixed axes. For a surface offset `p` from the anchor, it solves:
+Rendering needs a spatial field across Earth, not a single brightness multiplier at the eye. At each new simulation sample, the field retains a reception anchor, target vectors `r₀` at their separate emission times, and target **barycentric** velocities `v` at those times, all expressed in common Earth-fixed axes. For a surface offset `p` from the anchor, it solves:
 
 ```text
 Δτ = (|r₀ − p − v Δτ| − |r₀|) / c
@@ -53,7 +53,7 @@ Six fixed-point iterations update the light-time difference. To avoid subtractin
 |r₀+q| − |r₀| = q·(2r₀+q) / (|r₀+q|+|r₀|)
 ```
 
-This is a first-order extension of the ephemeris in **emission time**, not an exact resampling of its polynomials at every fragment. Barycentric target velocities are needed because reception remains at the same barycentric event while the target emission epoch changes. Observer velocity at another point is adjusted by `ω×p`; the artificial flying speed is excluded, as in the rest of the sky model. The field is rebuilt from the ephemeris as the simulation time or observer changes.
+This is a first-order extension of the ephemeris in **emission time**, not an exact resampling of its polynomials at every fragment. Barycentric target velocities are needed because reception remains at the same barycentric event while the target emission epoch changes. Observer velocity at another point is adjusted by `ω×p`; the artificial flying speed is excluded, as in the rest of the sky model. The field is rebuilt from the ephemeris as the simulation time or observer changes. For eye radii up to one billion metres the surface field retains the eye anchor. Beyond that threshold it independently solves both target light times at Earth center; it does not merely translate the distant eye's retarded vectors. The eye readout keeps a separate field solved at the actual eye. Both fields reject spatial offsets above 1.1 billion metres, so the local approximation is not extrapolated across the four-AU navigation domain. The threshold leaves ample offset margin for the whole terrestrial surface.
 
 Fresh ephemeris samples at other locations provide an independent check of the spatial approximation. Their tested differences are implementation evidence, not a bound on every supported date, altitude or body approach.
 
@@ -103,7 +103,7 @@ Named-location demonstrations and the runtime city catalog have been removed. Hi
 | Partial-eclipse fixture | 29.76328°, −95.36327° | 2024-04-08 18:40:00 |
 | No-eclipse fixture | 29.76328°, −95.36327° | 2024-04-09 18:40:00 |
 
-The active Earth surface is the smooth WGS84 ellipsoid at h=0. Eclipse physics remains available at user-entered coordinates and times. Observer altitude changes topocentric parallax; the view from orbit need not have the same eclipse fraction as the surface underneath.
+The active Earth surface is the smooth WGS84 ellipsoid at h=0 or the selected source-derived terrain and masked reference fallback. Eclipse physics remains available at user-entered coordinates and times. Observer altitude changes topocentric parallax; the view from orbit need not have the same eclipse fraction as the surface underneath.
 
 Independent references are regenerated with [`verify_eclipses.py`](../../scripts/verify_eclipses.py), using original CSPICE reception calculations and ERFA time/orientation/aberration. Its area reference integrates vertical chords with adaptive quadrature instead of using the production sector expression. Fixture dates avoid leap boundaries; existing time tests cover those separately.
 

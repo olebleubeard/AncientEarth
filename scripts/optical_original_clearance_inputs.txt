@@ -1,0 +1,15 @@
+# Union with optical_normal_scene_inputs.txt in verify_optical_wavefront.ps1.
+scripts/optical_original_clearance_fixture.rs
+scripts/optical_cartesian_suffix_fixture.rs
+scripts/optical_shader_reachability.rs
+docs/science/original-clearance-control.md
+scripts/test_optical_original_clearance_source.py
+scripts/review_optical_cartesian_suffix_source.py
+artifacts/optical-normal-scene-reference-selected.wgsl
+artifacts/optical-trace-performance-1920x1080-g32-air-q16serial.json
+scripts/review_optical_original_clearance.py
+artifacts/optical-primary-loop-control-checked-first.wgsl
+artifacts/optical-original-clearance-selected-first-review-input-archive.json
+artifacts/optical-original-clearance-selected-first-source-review-selected.py
+artifacts/optical-original-clearance-selected-first-control-selected.md
+artifacts/optical-original-clearance-selected-first-runtime-auditor-selected.py

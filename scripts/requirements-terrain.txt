@@ -1,5 +1,7 @@
-# Optional asset preparation only; the native app has no Python dependency.
+# Optional asset preparation and independent verification; not native runtime dependencies.
 numpy==2.4.6
 Pillow==11.3.0
 pyproj==3.7.2
 rasterio==1.4.4
+# BSD-3-Clause; high-precision independent quadrature fixtures only.
+mpmath==1.3.0

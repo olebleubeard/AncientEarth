@@ -1,0 +1,508 @@
+{
+  "schema": "repository-attribution-archive-migration-v1",
+  "prepared_only": true,
+  "destination_repository": "https://github.com/olebleubeard/AncientEarth",
+  "display_name": "oleBlueBeard",
+  "scan_sha256": "5c930e1fb49a2612315158b6064f90fbaa6ecf70d23bdfafb7c28e34938abe4b",
+  "script_sha256": "b09579cb080f6a0650ce241989c196a8bf41188fab9c07de7971677ec8879950",
+  "scope": "Attribution-only archive copies were prepared and verified. No numerical test or benchmark was rerun by this transformation. A separate application rebuild is outside this report.",
+  "historical_integrity": "Original run/source/outer archive manifests remain unchanged historical fingerprints. They describe pre-migration bytes. This mapping and each sanitized paths.json identify the prepared containers; a historical hash must not be silently treated as their current hash.",
+  "manual_backups_accessed": false,
+  "all_non_attribution_leaf_payloads_byte_identical": true,
+  "original_run_manifests_and_results_byte_identical": true,
+  "archives": [
+    {
+      "path": "artifacts/optical-cartesian-direct-gpu-first-source.zip",
+      "changed": true,
+      "original_sha256": "420ab4df2b29f32d66ab14988ec90e02d17b2e04801cd54aaf2da6fe7d767116",
+      "sanitized_sha256": "d23243cae114911c9697b9dc9d3c3edddbc4c105aab32b38b11fd20f9f821202"
+    },
+    {
+      "path": "artifacts/optical-cartesian-f64-host-before-source.zip",
+      "changed": false,
+      "original_sha256": "3d4fa0e0f2918e1825c6700d9af036836d574a048b30b04977d2f1a92feb6667",
+      "sanitized_sha256": "3d4fa0e0f2918e1825c6700d9af036836d574a048b30b04977d2f1a92feb6667"
+    },
+    {
+      "path": "artifacts/optical-cartesian-f64-selected-first-source.zip",
+      "changed": true,
+      "original_sha256": "834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+      "sanitized_sha256": "2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6"
+    },
+    {
+      "path": "artifacts/optical-cartesian-matrix-candidate-first-source.zip",
+      "changed": true,
+      "original_sha256": "828d48ee50de2dd65ea646b9be36408a58c14b134fc901f1ce5ca826da61a45b",
+      "sanitized_sha256": "9cadca7ca4e3ec4658b7c1adcad736a6b523c10bb9621d0d3251d2a85adfa54c"
+    },
+    {
+      "path": "artifacts/optical-cartesian-matrix-reference-first-source.zip",
+      "changed": true,
+      "original_sha256": "d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+      "sanitized_sha256": "4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a"
+    },
+    {
+      "path": "artifacts/optical-cartesian-suffix-selected-first-source.zip",
+      "changed": true,
+      "original_sha256": "685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+      "sanitized_sha256": "9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5"
+    },
+    {
+      "path": "artifacts/optical-cartesian-trial-gpu-first-source.zip",
+      "changed": true,
+      "original_sha256": "e80638f4db8dd66bb395ccad0a3bac1b63dae1aa06c8d060ef64248095d94962",
+      "sanitized_sha256": "bf86fb9c6703293cb98ac20f2e820643a600d3004d1cddfcf9afb330fdddcf39"
+    },
+    {
+      "path": "artifacts/optical-cartesian-trial-host-before-source.zip",
+      "changed": false,
+      "original_sha256": "66fcfe7803bfae0ea2f3b92e9576d4c9616134ed0ceb4b27727daf93223d6c6e",
+      "sanitized_sha256": "66fcfe7803bfae0ea2f3b92e9576d4c9616134ed0ceb4b27727daf93223d6c6e"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-atmosphere-first-source.zip",
+      "changed": true,
+      "original_sha256": "cf62560de9bda74a4aab2c318c1c55255bd611e331f7dd633c5ecd377732f536",
+      "sanitized_sha256": "329c47605f3f699bdddc7a6dd936bfac24947df4e9ae9690baab34ad55c68bef"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-full-pair-first-source.zip",
+      "changed": false,
+      "original_sha256": "c27c7a4b73b9901c9afc4d1fe3606269cdc85c5459f702322f92cb8c445b17e5",
+      "sanitized_sha256": "c27c7a4b73b9901c9afc4d1fe3606269cdc85c5459f702322f92cb8c445b17e5"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-matrix-offline-first-source.zip",
+      "changed": true,
+      "original_sha256": "07549582451ad8df716ef64ce5629a245b6ac4c206631f14c93a8fa50caa7960",
+      "sanitized_sha256": "6a118f5e540f120d9f53b2799706bf593b3b9b67fa999314f8a809b07ced27d5"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-returning-first-source.zip",
+      "changed": false,
+      "original_sha256": "517e4c9a1b47ab4d8fe8fbfd964c231a212e334c666bcf647eafa60d6faa7bac",
+      "sanitized_sha256": "517e4c9a1b47ab4d8fe8fbfd964c231a212e334c666bcf647eafa60d6faa7bac"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-returning-offline-first-source.zip",
+      "changed": true,
+      "original_sha256": "b1d255a2d1af3044283b744669fdbf1277795ecbd9fc4d81c5a7d0766c0120e9",
+      "sanitized_sha256": "d914ca4c0e49b4c875cafd419e0bf066e7101cba881692caede1d681cc8bbfe2"
+    },
+    {
+      "path": "artifacts/optical-composite-f64-returning-reference-first-source.zip",
+      "changed": true,
+      "original_sha256": "0a1d7f4ab048a49510d9766b0b2551b473e0b76ddcda2fb1b90ea4b3ffad73cb",
+      "sanitized_sha256": "5fdfb50af7eb7afedd6580d027f3c7fe7b0e7f6a7572f951a43f04d6351b8008"
+    },
+    {
+      "path": "artifacts/optical-handoff-feasibility-first-source.zip",
+      "changed": false,
+      "original_sha256": "5bac0b4c698e2e799c6eb0dc539cf1f02c9578e96cf3d152c1aa21874eb33999",
+      "sanitized_sha256": "5bac0b4c698e2e799c6eb0dc539cf1f02c9578e96cf3d152c1aa21874eb33999"
+    },
+    {
+      "path": "artifacts/optical-handoff-packed-field-first-source.zip",
+      "changed": false,
+      "original_sha256": "9d5b3304d5e9ca442aac389b2d974a996ca243b833b8e22019d4685005f52426",
+      "sanitized_sha256": "9d5b3304d5e9ca442aac389b2d974a996ca243b833b8e22019d4685005f52426"
+    }
+  ],
+  "archive_nodes": [
+    {
+      "first_seen_as": "artifacts/optical-cartesian-direct-gpu-first-source.zip",
+      "original_sha256": "420ab4df2b29f32d66ab14988ec90e02d17b2e04801cd54aaf2da6fe7d767116",
+      "sanitized_sha256": "d23243cae114911c9697b9dc9d3c3edddbc4c105aab32b38b11fd20f9f821202",
+      "original_bytes": 844750,
+      "sanitized_bytes": 844749,
+      "members": 70,
+      "unchanged_members": 69,
+      "changes": [
+        {
+          "original_member": "Cargo.toml",
+          "sanitized_member": "Cargo.toml",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-f64-host-before-source.zip",
+      "original_sha256": "3d4fa0e0f2918e1825c6700d9af036836d574a048b30b04977d2f1a92feb6667",
+      "sanitized_sha256": "3d4fa0e0f2918e1825c6700d9af036836d574a048b30b04977d2f1a92feb6667",
+      "original_bytes": 10727,
+      "sanitized_bytes": 10727,
+      "members": 2,
+      "unchanged_members": 2,
+      "changes": [],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-f64-selected-first-source.zip!blobs/d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+      "original_sha256": "d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+      "sanitized_sha256": "4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+      "original_bytes": 359583,
+      "sanitized_bytes": 359582,
+      "members": 89,
+      "unchanged_members": 88,
+      "changes": [
+        {
+          "original_member": "Cargo.toml",
+          "sanitized_member": "Cargo.toml",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-f64-selected-first-source.zip!blobs/685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+      "original_sha256": "685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+      "sanitized_sha256": "9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+      "original_bytes": 195276,
+      "sanitized_bytes": 195273,
+      "members": 60,
+      "unchanged_members": 59,
+      "changes": [
+        {
+          "original_member": "Cargo.toml",
+          "sanitized_member": "Cargo.toml",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-f64-selected-first-source.zip",
+      "original_sha256": "834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+      "sanitized_sha256": "2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6",
+      "original_bytes": 49624347,
+      "sanitized_bytes": 49624344,
+      "members": 234,
+      "unchanged_members": 230,
+      "changes": [
+        {
+          "original_member": "blobs/d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_member": "blobs/4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_sha256": "d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_sha256": "4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_bytes": 359583,
+          "sanitized_bytes": 359582,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_member": "blobs/9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_sha256": "685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_sha256": "9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_bytes": 195276,
+          "sanitized_bytes": 195273,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_member": "blobs/75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        },
+        {
+          "original_member": "paths.json",
+          "sanitized_member": "paths.json",
+          "original_sha256": "3f73a9d6387677daa6d34770eb4ae41c03370890e594f3f44f116afe389abe64",
+          "sanitized_sha256": "81d340a1555d758dcc8c925b985c215a426833ca803cb76c65151321b0a4ce96",
+          "original_bytes": 80127,
+          "sanitized_bytes": 80127,
+          "reason": "sanitized_content_address_map"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-matrix-candidate-first-source.zip",
+      "original_sha256": "828d48ee50de2dd65ea646b9be36408a58c14b134fc901f1ce5ca826da61a45b",
+      "sanitized_sha256": "9cadca7ca4e3ec4658b7c1adcad736a6b523c10bb9621d0d3251d2a85adfa54c",
+      "original_bytes": 374721,
+      "sanitized_bytes": 374720,
+      "members": 92,
+      "unchanged_members": 91,
+      "changes": [
+        {
+          "original_member": "Cargo.toml",
+          "sanitized_member": "Cargo.toml",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-trial-gpu-first-source.zip",
+      "original_sha256": "e80638f4db8dd66bb395ccad0a3bac1b63dae1aa06c8d060ef64248095d94962",
+      "sanitized_sha256": "bf86fb9c6703293cb98ac20f2e820643a600d3004d1cddfcf9afb330fdddcf39",
+      "original_bytes": 595095,
+      "sanitized_bytes": 595094,
+      "members": 57,
+      "unchanged_members": 56,
+      "changes": [
+        {
+          "original_member": "Cargo.toml",
+          "sanitized_member": "Cargo.toml",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-cartesian-trial-host-before-source.zip",
+      "original_sha256": "66fcfe7803bfae0ea2f3b92e9576d4c9616134ed0ceb4b27727daf93223d6c6e",
+      "sanitized_sha256": "66fcfe7803bfae0ea2f3b92e9576d4c9616134ed0ceb4b27727daf93223d6c6e",
+      "original_bytes": 5344,
+      "sanitized_bytes": 5344,
+      "members": 2,
+      "unchanged_members": 2,
+      "changes": [],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-atmosphere-first-source.zip",
+      "original_sha256": "cf62560de9bda74a4aab2c318c1c55255bd611e331f7dd633c5ecd377732f536",
+      "sanitized_sha256": "329c47605f3f699bdddc7a6dd936bfac24947df4e9ae9690baab34ad55c68bef",
+      "original_bytes": 96909252,
+      "sanitized_bytes": 96909223,
+      "members": 266,
+      "unchanged_members": 261,
+      "changes": [
+        {
+          "original_member": "blobs/834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+          "sanitized_member": "blobs/2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6",
+          "original_sha256": "834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+          "sanitized_sha256": "2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6",
+          "original_bytes": 49624347,
+          "sanitized_bytes": 49624344,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_member": "blobs/4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_sha256": "d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_sha256": "4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_bytes": 359583,
+          "sanitized_bytes": 359582,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_member": "blobs/9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_sha256": "685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_sha256": "9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_bytes": 195276,
+          "sanitized_bytes": 195273,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_member": "blobs/75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        },
+        {
+          "original_member": "paths.json",
+          "sanitized_member": "paths.json",
+          "original_sha256": "30e103f62f7c8827a331ed11520c6bd3fe71937c3600b39a747de73e091b73a3",
+          "sanitized_sha256": "a60205e05178cec1340be059bf1793291d0ae133ca6e68ba170205b5cf2aff1f",
+          "original_bytes": 94680,
+          "sanitized_bytes": 94680,
+          "reason": "sanitized_content_address_map"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-full-pair-first-source.zip",
+      "original_sha256": "c27c7a4b73b9901c9afc4d1fe3606269cdc85c5459f702322f92cb8c445b17e5",
+      "sanitized_sha256": "c27c7a4b73b9901c9afc4d1fe3606269cdc85c5459f702322f92cb8c445b17e5",
+      "original_bytes": 30650602,
+      "sanitized_bytes": 30650602,
+      "members": 37,
+      "unchanged_members": 37,
+      "changes": [],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-matrix-offline-first-source.zip",
+      "original_sha256": "07549582451ad8df716ef64ce5629a245b6ac4c206631f14c93a8fa50caa7960",
+      "sanitized_sha256": "6a118f5e540f120d9f53b2799706bf593b3b9b67fa999314f8a809b07ced27d5",
+      "original_bytes": 97060291,
+      "sanitized_bytes": 97060262,
+      "members": 276,
+      "unchanged_members": 271,
+      "changes": [
+        {
+          "original_member": "blobs/834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+          "sanitized_member": "blobs/2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6",
+          "original_sha256": "834e4a18ec50c4e0577d1d7fec1122038f50a7024b9acb76119c7b155bbc42ee",
+          "sanitized_sha256": "2eaa7e5cf0c8cab70adf436fe0c96c6bf9d9e04d55eeeb100abefb73dee33da6",
+          "original_bytes": 49624347,
+          "sanitized_bytes": 49624344,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_member": "blobs/4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_sha256": "d6afbc734974ec8e7e5361e641eca38222fda95fd5bb77ac2e01b07104b3d4a2",
+          "sanitized_sha256": "4bf126931f48c7b63a27fded301a6653c77c4a68c312369a71676d5a8d2c754a",
+          "original_bytes": 359583,
+          "sanitized_bytes": 359582,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_member": "blobs/9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_sha256": "685c0642337a784a8c7d5adc9337af840fa6eb0ed84281e9751f43042eee5cc8",
+          "sanitized_sha256": "9561224a7284cbaa1c222ee550115833027627c0e97d33ff0569aa4e2f35e7a5",
+          "original_bytes": 195276,
+          "sanitized_bytes": 195273,
+          "reason": "nested_attribution_migration"
+        },
+        {
+          "original_member": "blobs/18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_member": "blobs/75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        },
+        {
+          "original_member": "paths.json",
+          "sanitized_member": "paths.json",
+          "original_sha256": "30e103f62f7c8827a331ed11520c6bd3fe71937c3600b39a747de73e091b73a3",
+          "sanitized_sha256": "a60205e05178cec1340be059bf1793291d0ae133ca6e68ba170205b5cf2aff1f",
+          "original_bytes": 94680,
+          "sanitized_bytes": 94680,
+          "reason": "sanitized_content_address_map"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-returning-first-source.zip",
+      "original_sha256": "517e4c9a1b47ab4d8fe8fbfd964c231a212e334c666bcf647eafa60d6faa7bac",
+      "sanitized_sha256": "517e4c9a1b47ab4d8fe8fbfd964c231a212e334c666bcf647eafa60d6faa7bac",
+      "original_bytes": 22143951,
+      "sanitized_bytes": 22143951,
+      "members": 31,
+      "unchanged_members": 31,
+      "changes": [],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-returning-offline-first-source.zip",
+      "original_sha256": "b1d255a2d1af3044283b744669fdbf1277795ecbd9fc4d81c5a7d0766c0120e9",
+      "sanitized_sha256": "d914ca4c0e49b4c875cafd419e0bf066e7101cba881692caede1d681cc8bbfe2",
+      "original_bytes": 49376429,
+      "sanitized_bytes": 49376430,
+      "members": 302,
+      "unchanged_members": 300,
+      "changes": [
+        {
+          "original_member": "blobs/18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_member": "blobs/75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        },
+        {
+          "original_member": "paths.json",
+          "sanitized_member": "paths.json",
+          "original_sha256": "add0713f65412f81c271f299754aca22c519825729b71a8af3a1b8b3cff79b7e",
+          "sanitized_sha256": "b532a35acf0493bd619f482ad6681b092e0ce22e82a9120089a7a5d3fb190575",
+          "original_bytes": 138361,
+          "sanitized_bytes": 138361,
+          "reason": "sanitized_content_address_map"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-composite-f64-returning-reference-first-source.zip",
+      "original_sha256": "0a1d7f4ab048a49510d9766b0b2551b473e0b76ddcda2fb1b90ea4b3ffad73cb",
+      "sanitized_sha256": "5fdfb50af7eb7afedd6580d027f3c7fe7b0e7f6a7572f951a43f04d6351b8008",
+      "original_bytes": 50107370,
+      "sanitized_bytes": 50107371,
+      "members": 471,
+      "unchanged_members": 469,
+      "changes": [
+        {
+          "original_member": "blobs/18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_member": "blobs/75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_sha256": "18bdbbf5bd6b828e3b500a32db940c10c08705da640d92ee7cf38b656e082a5e",
+          "sanitized_sha256": "75e4e1401de6743000a622cdf1c45baf8bd466188bf728c6ab53171acee00c47",
+          "original_bytes": 1163,
+          "sanitized_bytes": 1165,
+          "reason": "repository_attribution_only"
+        },
+        {
+          "original_member": "paths.json",
+          "sanitized_member": "paths.json",
+          "original_sha256": "4f3e7297f6751686396250b2edd09431138c243c8cc4919376f83303ba31db31",
+          "sanitized_sha256": "a89c7136572716aca26157aa35ffa194fa6262f96afaf7a316a7adb292bb275e",
+          "original_bytes": 241812,
+          "sanitized_bytes": 241812,
+          "reason": "sanitized_content_address_map"
+        }
+      ],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-handoff-feasibility-first-source.zip",
+      "original_sha256": "5bac0b4c698e2e799c6eb0dc539cf1f02c9578e96cf3d152c1aa21874eb33999",
+      "sanitized_sha256": "5bac0b4c698e2e799c6eb0dc539cf1f02c9578e96cf3d152c1aa21874eb33999",
+      "original_bytes": 81418,
+      "sanitized_bytes": 81418,
+      "members": 19,
+      "unchanged_members": 19,
+      "changes": [],
+      "all_output_members_verified": true
+    },
+    {
+      "first_seen_as": "artifacts/optical-handoff-packed-field-first-source.zip",
+      "original_sha256": "9d5b3304d5e9ca442aac389b2d974a996ca243b833b8e22019d4685005f52426",
+      "sanitized_sha256": "9d5b3304d5e9ca442aac389b2d974a996ca243b833b8e22019d4685005f52426",
+      "original_bytes": 200014,
+      "sanitized_bytes": 200014,
+      "members": 27,
+      "unchanged_members": 27,
+      "changes": [],
+      "all_output_members_verified": true
+    }
+  ],
+  "original_archives_unchanged_during_preparation": true,
+  "installation": "This report certifies prepared copies only. It does not certify later installation. Compare each installed archive with its sanitized_sha256 to establish current identity."
+}

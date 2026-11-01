@@ -2,9 +2,13 @@
 use crate::Vec3d;
 use std::fmt;
 
+pub mod aim;
 mod bodies;
 mod eclipse;
 mod eop;
+pub mod info;
+pub mod lunar;
+pub mod orbit;
 mod orientation;
 #[cfg(test)]
 mod orientation_review;
@@ -48,7 +52,7 @@ impl fmt::Display for AstroError {
             Self::MissingBody(id) => write!(f, "The ephemeris has no complete center chain for body {id}."),
             Self::KernelCoverage => f.write_str("Requested time is outside the ephemeris segment coverage."),
             Self::InvalidEarthOrientationData => f.write_str("Invalid IERS Earth-orientation records."),
-            Self::InvalidObserver => f.write_str("Observer position must be finite."),
+            Self::InvalidObserver => f.write_str("Observer position must be finite and within the four-AU domain, with a subluminal modeled aberration velocity."),
         }
     }
 }
@@ -119,6 +123,36 @@ pub struct CelestialBody {
     pub light_time_seconds: f64,
 }
 
+impl CelestialBody {
+    /// Shared apparent-sphere root calculation. Internal callers supply a
+    /// finite origin and a normalized direction; both entry and exit roots
+    /// remain valid measurement targets, including a zero-distance contact.
+    pub(crate) fn nearest_surface_distance(self, eye: Vec3d, direction: Vec3d) -> Option<f64> {
+        let radius = self.radius_m;
+        if !radius.is_finite() || radius <= 0.0 || !self.apparent_center_ecef_m.is_finite() {
+            return None;
+        }
+        let origin = (eye - self.apparent_center_ecef_m) / radius;
+        let norm = origin.length();
+        let b = origin.dot(direction);
+        let c = (norm - 1.0) * (norm + 1.0);
+        let cross = origin.cross(direction);
+        let cross_squared = cross.dot(cross);
+        let discriminant = 1.0 - cross_squared;
+        let tolerance = 32.0 * f64::EPSILON * cross_squared.max(1.0);
+        if !discriminant.is_finite() || discriminant < -tolerance {
+            return None;
+        }
+        let q = -b - discriminant.max(0.0).sqrt().copysign(b);
+        let roots = if q == 0.0 { [-b, -b] } else { [q, c / q] };
+        roots
+            .into_iter()
+            .map(|root| root * radius)
+            .filter(|distance| distance.is_finite() && *distance >= 0.0)
+            .min_by(f64::total_cmp)
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct AstroQuality {
     pub earth_rotation: EarthRotationQuality,
@@ -144,6 +178,12 @@ impl AstroQuality {
 
 #[derive(Clone, Copy, Debug)]
 pub struct AstronomyFrame {
+    /// Exact input identity for presentation consumers; Julian-day display
+    /// values alone lose sub-millisecond changes at contemporary epochs.
+    pub sample_instant: AstroInstant,
+    pub sample_observer_ecef_m: Vec3d,
+    pub sample_follow_earth: bool,
+    pub velocity_convention: ApparentVelocityConvention,
     pub sun: CelestialBody,
     pub moon: CelestialBody,
     pub icrf_to_ecef: Mat3d,
@@ -156,10 +196,34 @@ pub struct AstronomyFrame {
     pub moon_illuminated_fraction: f64,
     /// Unit direction from Moon toward Sun in the common ECEF axes.
     pub moon_to_sun_direction_ecef: Vec3d,
+    pub lunar_orientation: lunar::LunarOrientation,
     pub eclipse: SolarEclipseField,
     /// Apparent-disk field for the observer's selected motion convention.
     /// `eclipse` remains the co-rotating surface field used by ground shading.
     pub observer_eclipse: SolarEclipseField,
+}
+
+/// Aberration receiver convention, separate from a virtual camera trajectory.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ApparentVelocityConvention {
+    CorotatingEye,
+    EarthTranslation,
+    SurfaceReference,
+}
+impl ApparentVelocityConvention {
+    pub fn description(self) -> &'static str {
+        match self {
+            Self::CorotatingEye => {
+                "Scientific receiver: Earth translation plus co-rotation at the actual eye"
+            }
+            Self::EarthTranslation => {
+                "Inspection receiver: Earth's barycentric translation; no terrestrial spin"
+            }
+            Self::SurfaceReference => {
+                "Inspection receiver: Earth translation plus WGS84 h=0 observatory spin at the eye's latitude/longitude"
+            }
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -207,35 +271,18 @@ impl AstronomyFrame {
             (CelestialKind::Sun, self.sun),
             (CelestialKind::Moon, self.moon),
         ] {
-            let radius = state.radius_m;
-            if !radius.is_finite() || radius <= 0.0 || !state.apparent_center_ecef_m.is_finite() {
-                continue;
-            }
-            let origin = (ray.origin - state.apparent_center_ecef_m) / radius;
-            let norm = origin.length();
-            let b = origin.dot(direction);
-            let c = (norm - 1.0) * (norm + 1.0);
-            let cross_squared = origin.cross(direction).dot(origin.cross(direction));
-            let discriminant = 1.0 - cross_squared;
-            let tolerance = 32.0 * f64::EPSILON * cross_squared.max(1.0);
-            if !discriminant.is_finite() || discriminant < -tolerance {
-                continue;
-            }
-            let q = -b - discriminant.max(0.0).sqrt().copysign(b);
-            let roots = if q == 0.0 { [-b, -b] } else { [q, c / q] };
-            for root in roots {
-                let distance = root * radius;
-                if distance.is_finite() && distance >= 0.0 && distance < nearest {
-                    let position = ray.origin + direction * distance;
-                    let normal = (position - state.apparent_center_ecef_m).normalized()?;
-                    nearest = distance;
-                    selected = Some(CelestialHit {
-                        body,
-                        distance_m: distance,
-                        position_ecef_m: position,
-                        normal_ecef: normal,
-                    });
-                }
+            if let Some(distance) = state.nearest_surface_distance(ray.origin, direction)
+                && distance < nearest
+            {
+                let position = ray.origin + direction * distance;
+                let normal = (position - state.apparent_center_ecef_m).normalized()?;
+                nearest = distance;
+                selected = Some(CelestialHit {
+                    body,
+                    distance_m: distance,
+                    position_ecef_m: position,
+                    normal_ecef: normal,
+                });
             }
         }
         selected

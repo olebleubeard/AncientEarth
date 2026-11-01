@@ -301,11 +301,29 @@ fn real_noaa_column_matches_independent_gdal_values_and_registration() {
         metadata.surface_conditions_label(earth_math::UnitSystem::Imperial),
         "2m air: 74.5°F; surface: 1019.8 hPa; specific humidity: 14.23 g/kg"
     );
-    assert_eq!(decoded.profile.layers().len(), PRESSURE_LEVELS.len() + 3);
+    assert_eq!(decoded.profile.layers().len(), PRESSURE_LEVELS.len() + 4);
+    assert!((metadata.temperature_80m_k.unwrap() - TEMPERATURE_80M_K).abs() < 0.00004);
+    assert!((metadata.pressure_80m_pa.unwrap() - PRESSURE_80M_PA).abs() < 0.01);
+    assert!((metadata.specific_humidity_80m.unwrap() - SPECIFIC_HUMIDITY_80M).abs() < 2e-9);
+    // This is an actual geometric-height AGL field, not a geopotential level.
+    assert_eq!(decoded.profile.layers()[2].height_m, 80.0);
+    assert!(
+        (decoded.profile.layers()[2].refractivity
+            - (phase_index(
+                TEMPERATURE_80M_K,
+                PRESSURE_80M_PA,
+                SPECIFIC_HUMIDITY_80M,
+                550.0
+            )
+            .unwrap()
+                - 1.0))
+            .abs()
+            < 1e-10
+    );
     let radius = 6_356_766.0;
     let ground = radius * SURFACE_GEOPOTENTIAL_M / (radius - SURFACE_GEOPOTENTIAL_M);
     for (&(pressure, geopotential, temperature, humidity), actual) in
-        PRESSURE_LEVELS.iter().zip(&decoded.profile.layers()[2..])
+        PRESSURE_LEVELS.iter().zip(&decoded.profile.layers()[3..])
     {
         let expected_height = radius * geopotential / (radius - geopotential) - ground;
         let expected_index = phase_index(temperature, pressure, humidity, 550.0).unwrap();
@@ -560,8 +578,8 @@ fn refracted_guides_keep_constant_index_geometry_and_unresolved_rays_unavailable
         let rect = optical.horizontal_rect();
         assert!(((rect.max[1] - rect.min[1]) * 1.5 - 1.0).abs() < 5e-5);
     }
-    // The optical solver intentionally rejects legacy terrain scenes; the
-    // contour must not reinterpret these unresolved samples as ordinary sky.
+    // An empty physical scene now has the same supported h=0 fallback as the
+    // boundary-only scene; terrain support must not make it unavailable.
     assert!(
         HorizonProfile::measure_refracted(
             &TerrainScene::new(Vec::new()),
@@ -570,7 +588,7 @@ fn refracted_guides_keep_constant_index_geometry_and_unresolved_rays_unavailable
             viewport,
             &vacuum
         )
-        .is_none()
+        .is_some()
     );
 }
 
@@ -601,7 +619,7 @@ fn optical_skyline_matches_equatorial_tangent_and_celestial_path_composes_at_exi
     assert!(
         vacuum
             .skyline(&TerrainScene::new(Vec::new()), observer)
-            .is_none()
+            .is_some()
     );
 
     let atmosphere = profile(&[(0.0, 0.0003), (1000.0, 0.0)]);

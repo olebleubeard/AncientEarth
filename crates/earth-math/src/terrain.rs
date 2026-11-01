@@ -1,7 +1,8 @@
-//! Active height-free categories on analytic WGS84, plus archived triangle
-//! surface routines retained for historical tests. See docs/science/water.md.
+//! Smooth WGS84 with height-free categories, or optional canonical imported
+//! source terrain with independent categories. See docs/science/topography.md.
 use super::*;
 mod boundary;
+pub mod optical;
 mod skyline;
 pub use skyline::{SkylineMeasurement, SkylineMethod};
 
@@ -226,7 +227,7 @@ impl TerrainPatch {
         Geodetic::new(north, west, 0.0)?;
         Geodetic::new(south, east, 0.0)?;
         // This patch format intentionally excludes date-line and polar wraps.
-        if east - west > 5.0 || north - south > 5.0 || south <= -89.0 || north >= 89.0 {
+        if east - west > 5.0 || north - south > 5.0 || south <= -90.0 || north >= 90.0 {
             return Err(TerrainError::InvalidGrid);
         }
         let max_height = heights.iter().copied().fold(f64::NEG_INFINITY, f64::max);
@@ -299,6 +300,39 @@ impl TerrainPatch {
             f64_at(40),
             (0..count).map(|i| f64_at(48 + 8 * i)).collect(),
         )
+    }
+    /// Replace the grid's faces with a conforming source-post refinement.
+    /// Existing grid vertices stay at their original indices; added positions
+    /// are explicit geodetic source posts, never interpolated elevations.
+    pub(crate) fn with_source_refinement(
+        mut self,
+        added: Vec<Geodetic>,
+        faces: Vec<[usize; 3]>,
+    ) -> Result<Self, TerrainError> {
+        if self.vertices.len() + added.len() > 500_000 || faces.len() > 1_000_000 {
+            return Err(TerrainError::InvalidGrid);
+        }
+        for point in added {
+            if !self.contains(point)
+                || !point.height_m.is_finite()
+                || !(MIN_HEIGHT_M..=100_000.0).contains(&point.height_m)
+            {
+                return Err(TerrainError::InvalidGrid);
+            }
+            self.max_height = self.max_height.max(point.height_m);
+            self.vertices.push(geodetic_to_ecef(point));
+        }
+        self.triangles = faces
+            .into_iter()
+            .map(|face| Triangle::checked(&self.vertices, face, 0))
+            .collect::<Result<_, _>>()?;
+        if self.triangles.is_empty() {
+            return Err(TerrainError::InvalidGrid);
+        }
+        self.nodes.clear();
+        self.refined = true;
+        self.build_node(0, self.triangles.len());
+        Ok(self)
     }
     pub fn bounds(&self) -> [f64; 4] {
         [
@@ -623,16 +657,226 @@ impl TerrainPatch {
 pub struct TerrainScene {
     patches: Vec<TerrainPatch>,
     boundary_only: bool,
+    classification: Option<std::sync::Arc<TerrainScene>>,
+    water_masks: Option<std::sync::Arc<crate::water_mask::WaterMask>>,
+    global_land_mask: Option<std::sync::Arc<crate::water_mask::GlobalLandMask>>,
 }
 impl TerrainScene {
     pub fn new(patches: Vec<TerrainPatch>) -> Self {
         Self {
             patches,
             boundary_only: false,
+            classification: None,
+            water_masks: None,
+            global_land_mask: None,
         }
     }
+    /// Physical source DEM meshes plus independent height-free category masks.
+    /// Missing DEM coverage retains the reference ellipsoid, never an invented
+    /// interpolation between geographically separate downloaded tiles.
+    pub fn with_terrain(
+        patches: Vec<TerrainPatch>,
+        boundaries: std::sync::Arc<TerrainScene>,
+    ) -> Result<Self, TerrainError> {
+        if !boundaries.is_boundary_only()
+            || patches.is_empty()
+            || patches.iter().any(TerrainPatch::is_boundary_only)
+        {
+            return Err(TerrainError::InvalidGrid);
+        }
+        Ok(Self {
+            patches,
+            boundary_only: false,
+            classification: Some(boundaries),
+            water_masks: None,
+            global_land_mask: None,
+        })
+    }
+    /// Geographic category source. For imported terrain these masks have no
+    /// elevation role; their physical h=0 scene is never merged with the DSM.
+    pub fn boundaries(&self) -> &TerrainScene {
+        self.classification
+            .as_deref()
+            .map_or(self, Self::boundaries)
+    }
+    /// Smooth geometry with shared regional categories and a native mask overlay.
+    /// No AEB vertex/face arrays are cloned during application scene publication.
+    pub fn with_shared_category_masks(
+        boundaries: std::sync::Arc<TerrainScene>,
+        masks: std::sync::Arc<crate::water_mask::WaterMask>,
+    ) -> Result<Self, TerrainError> {
+        if !boundaries.is_boundary_only() {
+            return Err(TerrainError::InvalidGrid);
+        }
+        Ok(Self {
+            patches: Vec::new(),
+            boundary_only: true,
+            classification: Some(boundaries),
+            water_masks: Some(masks),
+            global_land_mask: None,
+        })
+    }
+    pub fn with_water_masks(mut self, masks: std::sync::Arc<crate::water_mask::WaterMask>) -> Self {
+        self.water_masks = Some(masks);
+        self
+    }
+    pub fn with_global_land_mask(
+        mut self,
+        mask: std::sync::Arc<crate::water_mask::GlobalLandMask>,
+    ) -> Self {
+        self.global_land_mask = Some(mask);
+        self
+    }
+    pub fn water_masks(&self) -> Option<&crate::water_mask::WaterMask> {
+        self.water_masks
+            .as_deref()
+            .or_else(|| self.classification.as_deref().and_then(Self::water_masks))
+    }
+    pub fn global_land_mask(&self) -> Option<&crate::water_mask::GlobalLandMask> {
+        self.global_land_mask.as_deref().or_else(|| {
+            self.classification
+                .as_deref()
+                .and_then(Self::global_land_mask)
+        })
+    }
+    /// Reuse immutable category payloads when switching physical surfaces.
+    pub fn shared_water_masks(&self) -> Option<std::sync::Arc<crate::water_mask::WaterMask>> {
+        self.water_masks.clone().or_else(|| {
+            self.classification
+                .as_deref()
+                .and_then(Self::shared_water_masks)
+        })
+    }
+    /// Geographic category only: 0 land,1 ocean,2 lake,3 river,4 unresolved.
+    /// Existing reconstructed local boundaries take priority over native WBM,
+    /// which takes priority over coarse global cartographic context.
+    pub fn category_code(&self, location: Geodetic) -> Option<u8> {
+        self.category(location).map(|(_, code)| code)
+    }
+    fn category(&self, location: Geodetic) -> Option<(usize, u8)> {
+        for (index, patch) in self.boundaries().patches.iter().enumerate() {
+            if let Some(code) = patch.boundary_class(location) {
+                return Some((index, code));
+            }
+        }
+        self.water_masks()
+            .and_then(|mask| mask.classify(location))
+            .or_else(|| {
+                self.global_land_mask()
+                    .and_then(|mask| mask.classify(location))
+            })
+            .map(|code| (0, code))
+    }
+    fn classify_physical_hit(&self, mut surface: SurfaceHit) -> SurfaceHit {
+        if self.classification.is_some() {
+            let classified = self.classify_ellipsoid_hit(surface.hit);
+            surface.grass_allowed = classified.grass_allowed;
+            if let (SurfaceKind::Terrain(patch), SurfaceKind::Water { kind, .. }) =
+                (surface.kind, classified.kind)
+            {
+                surface.kind = SurfaceKind::Water { patch, kind };
+            }
+        }
+        surface
+    }
+    /// Preserve latitude, longitude, orientation and pose settings when changing
+    /// the active surface. Raise feet only if the new model would contain them;
+    /// return the explicit upward adjustment in metres. Errors leave pose intact.
+    pub fn ensure_observer_above_surface(
+        &self,
+        observer: &mut Observer,
+    ) -> Result<f64, TerrainError> {
+        Geodetic::new(
+            observer.feet.lat_deg,
+            observer.feet.lon_deg,
+            observer.feet.height_m,
+        )?;
+        let ground = self.ground(observer.feet)?.hit.geodetic.height_m;
+        let target = observer.feet.height_m.max(ground);
+        let lift = target - observer.feet.height_m;
+        let mut candidate = *observer;
+        self.try_teleport(&mut candidate, observer.feet.with_height(target)?)?;
+        *observer = candidate;
+        Ok(lift)
+    }
     pub fn patches(&self) -> &[TerrainPatch] {
-        &self.patches
+        if self.boundary_only {
+            &self.boundaries().patches
+        } else {
+            &self.patches
+        }
+    }
+    /// Actual imported mesh coverage along the geodetic normal, independent of
+    /// categorical land/water labels. Missing data never become a terrain hit.
+    pub fn imported_ground(&self, location: Geodetic) -> Option<SurfaceHit> {
+        if self.boundary_only {
+            return None;
+        }
+        let surface = Geodetic::new(location.lat_deg, location.lon_deg, 0.0).ok()?;
+        self.terrain_ground(surface)
+            .map(|hit| self.classify_physical_hit(hit))
+    }
+    pub fn has_imported_coverage(&self, location: Geodetic) -> bool {
+        self.imported_ground(location).is_some()
+    }
+    /// Conservative protection against jumping entirely underneath a finite
+    /// raised patch through its open coverage edges. It can reject a harmless
+    /// nearby segment; it does not manufacture vertical surface geometry.
+    pub(crate) fn permits_uncovered_segment(&self, start: Vec3d, end: Vec3d) -> bool {
+        if self.boundary_only {
+            return true;
+        }
+        let displacement = end - start;
+        let distance = displacement.length();
+        let Some(direction) = displacement.normalized() else {
+            return true;
+        };
+        let scaled = |p: Vec3d| Vec3d::new(p.x / WGS84_A_M, p.y / WGS84_A_M, p.z / WGS84_B_M);
+        let origin = scaled(start);
+        let delta = scaled(displacement);
+        let fraction = (-origin.dot(delta) / delta.dot(delta)).clamp(0.0, 1.0);
+        let minimum_norm = (origin + delta * fraction).length();
+        // Outside: |Q^(1/2)(E+h*n)| <= 1+h/b. Inside, the radial
+        // surface point bounds the distance to the ellipsoid by a*(1-s).
+        let lower_height = if minimum_norm >= 1.0 {
+            WGS84_B_M
+        } else {
+            WGS84_A_M
+        } * (minimum_norm - 1.0)
+            - position_roundoff_m(start).max(position_roundoff_m(end));
+        let covers = |patch: &TerrainPatch, point: Vec3d| {
+            let Ok(location) = inverse_near_surface(point) else {
+                return false;
+            };
+            let top = Geodetic {
+                height_m: patch.max_height + 1000.0,
+                ..location
+            };
+            patch
+                .intersect(Ray {
+                    origin: geodetic_to_ecef(top),
+                    direction: -EnuBasis::at(top).up,
+                })
+                .is_some()
+        };
+        for patch in &self.patches {
+            let expansion = (patch.max_height.max(0.0) - lower_height).max(0.0);
+            if expansion == 0.0 {
+                continue;
+            }
+            let padding = Vec3d::new(expansion, expansion, expansion);
+            let bounds = Bounds {
+                min: patch.nodes[0].bounds.min - padding,
+                max: patch.nodes[0].bounds.max + padding,
+            };
+            if bounds.entry(start, direction, distance).is_some()
+                && !covers(patch, start)
+                && !covers(patch, end)
+            {
+                return false;
+            }
+        }
+        true
     }
     /// Whether the canonical Earth occupies a ray, without finding its nearest
     /// surface. A terrain hit already proves occupancy even when a reference
@@ -696,7 +940,7 @@ impl TerrainScene {
                 }
             }
         }
-        result
+        result.map(|hit| self.classify_physical_hit(hit))
     }
     /// Ground is the same triangle mesh intersected along geodetic up, not a
     /// separate bilinear height model. Supplied height is ignored.
@@ -711,9 +955,9 @@ impl TerrainScene {
             }));
         }
         if let Some(hit) = self.terrain_ground(surface) {
-            return Ok(hit);
+            return Ok(self.classify_physical_hit(hit));
         }
-        Ok(SurfaceHit {
+        Ok(self.classify_physical_hit(SurfaceHit {
             hit: RayHit {
                 distance_m: 0.0,
                 position: geodetic_to_ecef(surface),
@@ -722,7 +966,7 @@ impl TerrainScene {
             },
             kind: SurfaceKind::ReferenceEllipsoid,
             grass_allowed: true,
-        })
+        }))
     }
     // Mesh edges are Cartesian chords, whose geographic footprints are not
     // exactly the rectangular post bounds. Query the actual mesh, including
@@ -764,9 +1008,11 @@ impl TerrainScene {
         location: Geodetic,
     ) -> Result<(), TerrainError> {
         let hit = self.ground(location)?;
-        observer.feet = hit.hit.geodetic;
-        observer.pitch_deg = 0.0;
-        observer.speed_mps = 10.0;
+        let mut candidate = *observer;
+        candidate.feet = hit.hit.geodetic;
+        candidate.level_upright()?;
+        candidate.speed_mps = 10.0;
+        *observer = candidate;
         Ok(())
     }
     pub fn try_teleport(
@@ -850,6 +1096,11 @@ impl TerrainScene {
     /// Generic source-derived inspection pose: select the loaded region with
     /// most ocean faces, then the coast nearest its geographic center.
     pub fn boundary_observer(&self) -> Result<Observer, TerrainError> {
+        if let Some(categories) = &self.classification {
+            let mut observer = categories.boundary_observer()?;
+            self.ensure_observer_above_surface(&mut observer)?;
+            return Ok(observer);
+        }
         let patch = self
             .patches
             .iter()

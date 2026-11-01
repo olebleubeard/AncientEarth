@@ -1,0 +1,44 @@
+{
+  "scope": "original-primary-fixed-full-frame-diagnostic-only",
+  "reference_shader": "artifacts/optical-midpoint-reference-full.wgsl",
+  "reference_shader_sha256": "390e8b1e49b8048ade05bc419d683eb5dbacc8daade778f4bf18a63a8f23e63b",
+  "reference_shader_bytes": 24526,
+  "reference_uniform": "artifacts/optical-midpoint-reference-full-primary.bin",
+  "reference_uniform_sha256": "15213e2b44a0c396cf6a950a54ec4213f67fe69816f99ac0cf7b6a6dd4e5e561",
+  "reference_uniform_bytes": 2240,
+  "entry": "normal_scene",
+  "workgroup_size": [32, 1, 1],
+  "dispatch": [64800, 1, 1],
+  "dimensions": [1920, 1080],
+  "records": 2073600,
+  "admitted_layer_count": 45,
+  "all_functions": ["qmul", "geometry", "index_gradient", "knot_bound", "layer_step", "midpoint_delta", "midpoint", "advance_delta", "advance", "trace_result", "trace", "frame_point", "frame_vector", "frame_inverse", "segment_box", "triangle_contains", "triangle_candidate", "empty_event", "combine_event", "triangle_band", "face_event", "terrain_events", "marker_events", "scene_event", "terrain_coverage", "normal_scene"],
+  "proof_domain": [
+    "The host admits only byte-identical archived WGSL and the byte-identical 2240-byte primary uniform, after successful Naga parsing and validation. It does not rewrite any mathematical expression or authored guard.",
+    "The source profile count is finite integral 45. More generally the layer-loop argument requires integral count in 2..128, but this control does NOT admit different uniforms.",
+    "Keep ShaderRuntimeChecks::checked() except force_loop_bounding=false. All buffer/array access and integer division checks remain unchanged. No shader pruning or alternative numerical variant is admitted.",
+    "No geometric-packet correctness premise is needed for termination: every BVH traversal has its own shared finite visit counter before pointer-dependent control, and every leaf-face count is masked to 1..8. Geometric packet identity/physical correctness remains the existing independent fixture/provenance contract.",
+    "WGSL validation excludes recursion. The finite set of functions listed here includes the entire source, not merely a guessed reachable subset. Functions without loops perform finite straight-line operations and finite calls.",
+    "Floating-point nonconvergence, NaN or lack of physical progress cannot create an infinite loop: progress guards below are integer counters unaffected by ray arithmetic. This does not claim a useful worst-case GPU runtime or exclude watchdog failure."
+  ],
+  "loops": [
+    {"function":"geometry", "headers":["for(var i=0;i<5;i+=1)"], "proof":"i is an unmodified i32 outside its increment; at most 5 iterations. Exact-normal early break can only shorten it."},
+    {"function":"index_gradient", "headers":["for(var i=0;i<8;i+=1)"], "proof":"At most 8 binary-search iterations, independently of floating-point comparisons. Initially lo=0, hi=count-1; updates preserve 0<=lo<=hi<=count-1."},
+    {"function":"layer_step", "headers":["for(var i=0;i<8;i+=1)","for(var i=first;i<=last;i+=1u)"], "proof":"Search has at most 8 iterations. With count in 2..128 and lo in 0..count-1, first=max(lo-1,0), last=min(lo+1,count-2)<=126. The inclusive loop runs at most 3 times, or zero when first>last. Its increment cannot wrap. WGSL select may evaluate lo-1 at zero, but selects first=0; it does not make the loop unbounded."},
+    {"function":"trace", "headers":["for(var i=0;i<40;i+=1)","for(var i=0;i<32;i+=1)","for(var i=0;i<4096;i+=1)","for(var j=0;j<20;j+=1)","for(var j=0;j<20;j+=1)"], "proof":"Vacuum bracketing/search are capped at 40 and 32. Outer trace has at most 4096 attempts, including rejection/continue paths. Both nested height-root refinements have at most 20 iterations per call. No body assignment changes these i/j counters; i32 increments remain far below overflow."},
+    {"function":"segment_box", "headers":["for(var k=0u;k<3u;k+=1u)"], "proof":"At most 3 axes; early rejection only shortens the loop."},
+    {"function":"triangle_candidate", "headers":["for(var i=0u;i<3u;i+=1u)"], "proof":"At most 3 triangle edges."},
+    {"function":"face_event", "headers":["for(var i=0;i<24;i+=1)"], "proof":"At most 24 root-refinement iterations even when finite arithmetic cannot shrink the bracket. advance_delta has no unbounded loops."},
+    {"function":"terrain_events", "headers":["loop", "loop", "for(var j=0u;j<count;j+=1u)"], "proof":"Both nested traversals share visited initialized to 0. Every entered iteration first tests its pointer exit, then increments visited and immediately returns if visited>8192, BEFORE pointer-dependent continue/face work. At most 8193 combined counter increments per function call; at most 8192 iterations reach node work. There is no reset/decrement, so u32 wrap is impossible even for cyclic/out-of-range pointers. count=((leaf>>24)&7)+1 is in 1..8; leaf loop therefore cannot wrap."},
+    {"function":"marker_events", "headers":["loop", "for(var k=0u;k<8u;k+=1u)", "for(var k=0u;k<14u;k+=1u)"], "proof":"visited initialized to 0; each entered traversal iteration increments it before any pointer-dependent continue and returns above 2048. At most 2049 increments, no reset/decrement/wrap. Each leaf has exactly bounded 8-corner and 14-face loops."},
+    {"function":"terrain_coverage", "headers":["loop", "loop", "for(var j=0u;j<count;j+=1u)"], "proof":"The same two-level shared visited invariant as terrain_events gives at most 8193 counter increments per function call, independently of pointer progress. Leaf count is in 1..8. A found covering triangle only returns earlier."}
+  ],
+  "loop_totals": {"for":16, "loop":5, "while":0},
+  "required_host_checks": [
+    "Run audit before trusted shader creation; failure must abort this control, not silently disable additional checks.",
+    "Require unchanged --reference --full, no source pruning, uniform-loop rewrites, reuse, carry or canonical variant.",
+    "Retain exact original geometry/frame inputs and baseline output for all-word comparison. Their identity is an experimental/physical prerequisite even though traversal termination does not depend on well-formed pointers.",
+    "Use an external finite wall-clock watchdog. Finite termination does not establish acceptable latency.",
+    "Stop on any output parity failure. If one matched full-frame timing provides no material improvement, stop this performance branch. No application or native-flight acceptance follows from this isolated result."
+  ]
+}

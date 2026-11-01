@@ -1,0 +1,11 @@
+# Separate unimported preparation until the ten-preset baseline freeze ends.
+scripts/optical_cartesian_suffix_turning_fixture.rs
+scripts/verify_optical_integrator.py
+scripts/verify_optical_cartesian_turning.py
+artifacts/optical-cartesian-turning-reference-source-tests-first.log
+artifacts/optical-bouguer-reference.json
+crates/earth-math/src/atmosphere.rs
+crates/earth-math/src/atmosphere/gpu.rs
+crates/earth-math/src/atmosphere/gpu/scene.rs
+crates/earth-math/src/rendering.rs
+crates/earth-math/src/lib.rs

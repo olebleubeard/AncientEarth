@@ -116,6 +116,31 @@
       "commercial_use_allowed": true,
       "license_file": "licenses/NOAA-NWS-data-terms.html",
       "license_sha256": "8919bb160c331dbee30b25a03f3061b9f934bf05bb684c62fd1680e44ae43b8f"
+    },
+    "nasa-svs-lunar": {
+      "license": "Public-Domain",
+      "terms_url": "https://svs.gsfc.nasa.gov/help/",
+      "credit": "NASA's Scientific Visualization Studio; LRO / LROC / LOLA instrument teams; Arizona State University",
+      "notice_marker": "NASA's Scientific Visualization Studio; LRO / LROC / LOLA instrument teams; Arizona State University",
+      "reviewed": true,
+      "redistribution_allowed": true,
+      "modification_allowed": true,
+      "commercial_use_allowed": true,
+      "license_file": "licenses/NASA-SVS-lunar.md",
+      "license_sha256": "003d238172bbef6a403b23e0d373721384c70156de39e0def856e631bc8ec867"
+    },
+    "noaa-hrrr": {
+      "license": "Public-Domain",
+      "terms_url": "https://www.weather.gov/disclaimer",
+      "credit": "NOAA / NCEP High-Resolution Rapid Refresh (HRRR)",
+      "notice_marker": "NOAA / NCEP High-Resolution Rapid Refresh (HRRR)",
+      "reviewed": true,
+      "redistribution_allowed": true,
+      "modification_allowed": true,
+      "commercial_use_allowed": true,
+      "license_file": "licenses/NOAA-NWS-data-terms.html",
+      "license_sha256": "8919bb160c331dbee30b25a03f3061b9f934bf05bb684c62fd1680e44ae43b8f",
+      "review_note": "NOAA/NWS actual source terms and official NOAA/NCEP HRRR product description reviewed 2026-10-25. Approval applies only to original NOAA/NCEP data, not third-party products, agency trademarks or an implication of endorsement. Modified optical scenarios must remain identified as Ancient Earth derivatives."
     }
   },
   "assets": [
@@ -993,6 +1018,947 @@
         "noaa-gfs"
       ],
       "description": "F2 clean view retaining both measurement guides and the explicit high-altitude geometric fallback status. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-21 at 1920x1080 for repository publication. Original procedural presentation without photographic imagery, topographic relief or city markers. Project MIT terms and underlying source attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded font and software notices remain in THIRD_PARTY_LICENSES.txt. Forecast and display limits remain documented; this screenshot is not a measurement of actual local atmospheric conditions."
+    },
+    {
+      "path": "docs/images/stars-geometric-phase0.png",
+      "sha256": "f009d1ecef8ad8f2ac4d27df5734a33e7a874c2b71edf839ed689668dfbfe20d",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Night coast, geometric view, fixed star presentation phase 0 seconds and paused astronomy at 2026-10-21 06:00 UTC. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-geometric-phase04.png",
+      "sha256": "a9fbe9b890aaee65f749bad7386fc9447360cdd0a16cfde5a42a62fb7c3e6e21",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Night coast, geometric view, fixed star presentation phase 0.4 seconds and paused astronomy at 2026-10-21 06:00 UTC. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/guides-fast-geometric.png",
+      "sha256": "9e37b119052c0e1d8f02e8be830b0ed35fbca112e5a3f1ed120e4fe6860f14ec",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Clean geometric high-altitude horizon and V guide, with the analytic WGS84 contour clipped to the current viewport. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-refracted-phase0.png",
+      "sha256": "dad45eb65479b122778ce5e45e2ac2109d02fd4cafc6997937dbeb8f43e7273c",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Night coast, refracted view, fixed star presentation phase 0 seconds and paused astronomy at 2026-10-21 06:00 UTC. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/stars-refracted-phase04.png",
+      "sha256": "11a6be854cc22676bd6bf57a81579814f8cafe710b576b9284388af3882a052e",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Night coast, refracted view, fixed star presentation phase 0.4 seconds and paused astronomy at 2026-10-21 06:00 UTC. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/guides-fast-hidpi.png",
+      "sha256": "620f94fcb43dfddfe8d234de320f3fed73af909f08468aad4a7264bcf365bacb",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Clean fisheye high-altitude L/V guides with a 1.5 framebuffer scale; one-physical-pixel overlay verification. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/guides-fast-weather.png",
+      "sha256": "b26d55bfac99a1c303285ad02f0b58dc746f60c29b4ba05f420cc09060500a82",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Clean refracted telescope horizon with current-snapshot background L/V measurements and a fixed NOAA profile. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery or topographic relief. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions and atmospheric twinkling are illustrative, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/stars-pixels-normal-0.png",
+      "sha256": "36f43b0c2583f5586fdce4214e4056be8379931a9df2b57e3763606d31ad55d4",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native single-pixel stars, normal view, fixed phase zero. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-pixels-normal-04.png",
+      "sha256": "d97ed30ecbe2dee4f4a2c75338c2a8d1e343dfd7ad58dbc8a3e49759c35580a4",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native single-pixel stars, normal view, fixed phase 0.4 seconds. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-pixels-fisheye-0.png",
+      "sha256": "914fb78eb57bff53103d74f74de61ed80c4fcfbae878ba8aa0da8410ade3eca6",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native fixed-phase fisheye stars, phase zero. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-pixels-fisheye-04.png",
+      "sha256": "089be49748700a8fab73a6a8fab42abc87a6ec2791946234df1c7ed7c97bed14",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native fixed-phase fisheye stars, phase 0.4 seconds. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/stars-pixels-optical-0.png",
+      "sha256": "9f730c7b5aac517737bbfebf089691fa9f95e6e1ae79f208102b10c9163f2bea",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Native single-pixel stars through the fixed optical profile, phase zero. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/stars-pixels-optical-04.png",
+      "sha256": "d81297caf8b9017ed7c4f11439528947952eb2042c1e19f474eeb7f5c392f079",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Native single-pixel stars through the fixed optical profile, phase 0.4 seconds. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/topography-download-enabled.png",
+      "sha256": "ce1ffa527c98a24cac86189821394e84c543dfbfb6532c3baefc66099a071686",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Downloaded elevation panel, preserved source data, Imperial paired heights and explicit geometric fallback with weather loaded. Imported terrain uses unchanged Copernicus GLO-30 Public files N29W095 and N29W094 from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/guides-imperial-default.png",
+      "sha256": "38a475c7348cddb27108dd916bac19530d75a89f7787f2a47d444d98ebff4b25",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "L enables V by default in clean view; Imperial guide labels. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-marker-menu.png",
+      "sha256": "6b6e505caebab16c231f385c12a82b09b7bf9d9c9691757a99e53b0a35f1d3de",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Marker configuration dialog at the requested default coordinates, before any objects are placed; 0.5-mile spacing, 40-mile reach, 100-foot left offset. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-close-tape.png",
+      "sha256": "a80c47cdcb0b129376da422ac4f70f3a7e16e50e76bb1d1dc970bedf47a30a90",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Generated 10-by-10-by-100-foot reference prism with one-foot red/green bands, resolved close view and a 100-foot tape edge; final control layout. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-horizon-hidden.png",
+      "sha256": "55523858731916186bb59d747e6789f681ba7353fd15bfd0e8a70812287b035d",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Magnified default marker row: a visible prism at station 11.5 miles reports its Earth-hidden vertical centerline height, with a 100-foot tape edge; final control layout. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-row-default.png",
+      "sha256": "af5252e5114983111d72cde380da23f6b0604501aeb3b095a0c2d673b5e18a4f",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Default ground-level view of the asynchronously placed 80-marker row; the active row uses a 100-foot left offset and half-mile stations through 40 miles. Geometry naturally disappears below the modeled Earth horizon. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-fisheye-clean.png",
+      "sha256": "4d969bf19d58bf04c4cf43b4c188a0b5a0238b6b2c54333061cd4b5b04750e52",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Fisheye clean view with marker, 100-foot tape, L/V guides and explicit geometric fallback while the fixed weather profile remains loaded. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/topography-local-detail.png",
+      "sha256": "7a456ad18b3c30a8077614c212af8333f1f8baad26236db886055979c8ef9082",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native inspection of retained coastal source relief from the completed 100-mile download centered at 29.305549, -94.767015. The bounded 5 km local detail region preserves original one-arcsecond posts; heights are not exaggerated, and surrounding regional terrain remains coarser. Independent GDAL/PROJ and mesh-topology review covers the cached source import. No user cache files were modified. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-tape-overlay.png",
+      "sha256": "20a8f70633b190cb3c8be2ebb2fd5758f3a7e0faa35d1cb3140ee5173ea19d31",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Default first survey marker at the 100-foot left offset, viewed from the unchanged startup feet position. Clean view retains the one-physical-pixel projected tape annotation, ASCII small-font distance labels, endpoint labels and modeled Earth-hidden-height readout. The selected prism edge is 100 feet tall. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-tape-fisheye.png",
+      "sha256": "85a9ff741c358edc4c14697db25acdf5a597a5391f5f5d84c5dbfad1d80461ea",
+      "sources": [
+        "project",
+        "copernicus",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native equidistant fisheye clean view of a nearby survey prism and its thin projected ECEF tape chord. Small ASCII labels distinguish the 100-foot edge chord from the WGS84 surface geodesic. The overlay follows the actual lens projection and remains visible over the scene. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "assets/boundaries/global-land.ael",
+      "sha256": "4d81942b96266b90d9bddc8a9466ca2ccbf24f1f136c7b2888a5088f5761c5ca",
+      "sources": [
+        "natural-earth"
+      ],
+      "provenance": "assets/boundaries/global-land.provenance.json",
+      "provenance_sha256": "b18daacf1abb8f404a2d75047eb77a318a950e345e2d23fcbfd93b497ec4229e",
+      "description": "Made with Natural Earth. Source-reviewed public-domain v5.1.1 land polygons; commercial use, redistribution and modification permitted by actual provider terms reviewed 2026-10-22. Source and exact categorical raster preparation recorded in provenance and docs/science/water.md. A coarse global land/ocean fallback only; no imagery or elevations, no surveyed-shoreline claim or comprehensive inland water coverage. Native Copernicus WBM and reconstructed regional categories take precedence. Independently reviewed preprocessing, original source archive hash pinned by scripts/fetch_global_land.py. Retain NOTICE.md and source provenance."
+    },
+    {
+      "path": "docs/images/topography-wide-area.png",
+      "sha256": "e5845da25788757071b62c48765b067131e1c78083176243f72bbe902ff7d3bb",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Galveston reported nadir view after adding 13 matching native Copernicus WBM tiles to the existing 100-mile download; coastal categories extend beyond the previous region-04 rectangle. Elevations use the unchanged original DSMs. Natural Earth v5.1.1 categorical global context supplies only coarse land/ocean outside detailed coverage; no surveyed global shoreline or complete inland-water mapping is claimed. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/water-context-weather.png",
+      "sha256": "a739727dccade973ad70ea25a0a084a0944db8cc69660484dbe06314023ec86b",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Native coast-view optical shader regression with the fixed NOAA GFS verification snapshot. Reconstructed Copernicus boundaries and public-domain Natural Earth v5.1.1 coarse categorical context share the same source priority as ordinary rendering; no imagery or downloaded terrain elevations. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/topography-wide-smooth.png",
+      "sha256": "fecffdfafab86dd4a4c7486415e8b7bab99fa0a8ec5a6bf076847d3c2b6bdec1",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Same saved Galveston 100-mile area and reported nadir view in clean mode with elevations switched off after loading the cache. Native Copernicus water masks remain active while the physical surface returns to smooth WGS84. Coarse Natural Earth v5.1.1 land/ocean context remains separately sourced outside detailed coverage. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "assets/boundaries/global-land.aev",
+      "sha256": "c0c4280ef73b16c1ba50eef72e888c1daffabc90ac118d2bcb804e6ff7298924",
+      "sources": [
+        "natural-earth"
+      ],
+      "provenance": "assets/boundaries/global-land.vector.provenance.json",
+      "provenance_sha256": "bf2df41ee0520d187ec92141b65d859dd844dee5b0069cfaab9316057b988df8",
+      "description": "Made with Natural Earth. Original public-domain Natural Earth v5.1.1 land polygon segments compiled into an adaptive spatial index; no photographic imagery or elevation data. Source terms directly reviewed 2026-10-22 permit use, modification and redistribution, including commercial use. Source archive SHA-256 and exact transformation are retained in provenance. Original cartographic generalization and source limitations remain; this is not a surveyed shoreline or complete inland-water inventory. Preserve NOTICE.md and source provenance."
+    },
+    {
+      "path": "docs/images/coast-vector-before.png",
+      "sha256": "bb05fb8b4761e4531c35e6631fc2b7c89c7b07648c6c023359d39cb48a4ff976",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Historical before-fix baseline at the reported Galveston nadir pose with no downloaded topography. The original global 0.01-degree categorical raster visibly produces coarse coastline steps. Retained solely for before/after verification; it does not depict the corrected vector renderer. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/coast-vector-after.png",
+      "sha256": "568d386a970a173883c9b305e012e2393b3ae32504ab265a0ed1c2fc283531e4",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Corrected native Galveston nadir view with no downloaded topography. Continuous original Natural Earth vector boundaries replace the former global raster staircase; higher-detail bundled Copernicus boundaries retain priority. Same observer and lighting as coast-vector-before. Source-scale cartographic detail and finite source differences remain. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/rockies-terrain-detail.png",
+      "sha256": "b788c359f39257951e04ee9212a8e199550cc1af338465f7296bb7420c5b9de2",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native inspection of retained Copernicus terrain near the requested Rocky Mountains coordinate 38.829149, -106.415415. Isolated one-mile request with whole source/support files; unchanged heights and native local detail. The corrected diagnostic camera selects nearby terrain independently of mountain altitude. Spatial mesh chunks preserve canonical source geometry and lighting/shadows. UI shows source coverage and measurement results. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/coast-vector-optical.png",
+      "sha256": "620c1e4c4975c93950ff9a0bc5359810ef444254a526e966436511acc3de9b1a",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Native optical coast regression after introducing the shared original-vector global classifier. Fixed NOAA verification profile; clean view. Detailed Copernicus boundaries retain priority and the global Natural Earth fallback follows original segments. No imagery or terrain displacement. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/clean-height-imperial.png",
+      "sha256": "343c8e99a1911c9175fbdb8849255eda95900894b902db99f6f97a04a9ff6134",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native F2 clean view on the default smooth WGS84 surface. The small upper-right Height label shows current eye clearance in feet with miles in parentheses, using the same reviewed measurement as the full HUD. Panels and center dot are hidden. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/clean-height-metric-crouch.png",
+      "sha256": "f8dd79ca328633d369a8da38f1b497851107bb5eadb1e95b833fe098fe0a7915",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native F2 clean view with crouching enabled, metric units, L/V guides enabled and 1.5 display scaling. The upper-right Height label reports crouched eye clearance above the smooth surface in metres with kilometres in parentheses. Independent guide overlays remain available in clean view. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-22. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-numbered-signs.png",
+      "sha256": "12e9e2a5c05a9f4aa49c1dc07d6c4ecf8af7108b06f0c497d8c1e0b24b35c6d8",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Final native close survey view at fixed 2026-10-21T18:00:00 UTC, no grass: corrected upright eye-facing number plate 0001 above the marker, matching hover and tape labels, feet-and-inches height and datum readouts, and the visible maximum download radius. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/height-feet-inches.png",
+      "sha256": "aba702679d2df85a414ae3f6b902887d13b26d9bfdaeb0e9786e559d05ada447",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native default standing view at fixed 2026-10-21T18:00:00 UTC: right-pane Imperial eye-height and datum readouts use whole feet and inches, while the download panel shows its 100-mile / 160.9344 km maximum. Decorative grass is enabled. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/survey-numbered-fisheye.png",
+      "sha256": "b6c527cbd2514ab28c90e10c886542f9008ad679a92918ae99341d3a856d2bca",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native nearby survey view at fixed 2026-10-21T18:00:00 UTC with clean view, equidistant fisheye and grass disabled: upright white 0001 plate on black above the first marker, tape and upper-right Height overlay retained. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/panels-expanded.png",
+      "sha256": "9f73956c45fdbbccbaca9b2bc912ec7a3a57f9491536c324c680bdce79080cec",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native 1920x1080 view with independently collapsible navigation, measurements and help panels, their three exposed edge arrows and the Earth/Sun/Moon info button. Paused 2026-10-21 18:00 UTC, weather disabled. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/panels-collapsed.png",
+      "sha256": "32373ae25def2b8bb6a786bb4bb6a1c9a028547faa615f8a23c7d44df6fdfba9",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native 1920x1080 view with all three main panels collapsed and independent left, right and bottom restore arrows retained. Paused 2026-10-21 18:00 UTC, weather disabled. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/astronomy-info-clean.png",
+      "sha256": "0ad2f6fd99331d1bb1d7deabd9eb57660c3792ef4c225e7a1c46be82b2678370",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native 1920x1080 F2 clean view with the independently available Earth/Sun/Moon information window open on its Earth tab, paired metric/Imperial dimensions and current sample quality. Paused 2026-10-21 18:00 UTC, weather disabled. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/globe-flight-overview.png",
+      "sha256": "4d685241d551b2439dfbef07c3ecb53e69c7b4f15674530966bc895974a350b7",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native first-person high-altitude globe overview using the existing geometric ground renderer and shared regional/native/global boundary classification. Visible global continents and oceans at paused 2026-10-21 18:00 UTC; clean view, weather disabled. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/orbital-globe-tilt.png",
+      "sha256": "e039715814e1ba67d1e56e91c75c3a721fd6c58cb06c2ef2576f65279431e9bf",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Globe inspection at paused 2026-10-21 18:00 UTC: global continent/ocean context, CIP axis, instantaneous orbital plane and numerical tilt annotations, with Earth on the dated DE440 trajectory and measured caption placement. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/orbital-path-hidpi.png",
+      "sha256": "8f06e307ca9d6cc52e3fd4cdc1a0ad2df89e9f733eb283ff5df34171f33411ce",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Whole-orbit inspection at paused 2026-10-21 18:00 UTC with 1.5x logical UI scaling: dated DE440 Earth path around the Sun, true-size bodies with explicitly marked locator symbols, enlarged axis/plane direction annotations and nonoverlapping measured captions. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/orbital-controls.png",
+      "sha256": "f23d91715ab00bf06a69135816c1491a1b8691d69d34cffd13dec77ddfe64737",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Globe inspection controls and measurements at paused 2026-10-21 18:00 UTC: Aim at Earth, whole-orbit and globe fitting, calendar/playback, orbital geometry readouts and collapsible edge panels. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/continuous-ground-controls.png",
+      "sha256": "3214860666445e658f89b1cbba459ba6a32f65af0dab7a864b82ad6034bc9e6b",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Default Galveston-area observer with the continuous-flight controls, automatic speed option, local water surface and current eye-height readout. Paused 2026-10-21 18:00 UTC. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/continuous-globe.png",
+      "sha256": "5a9356e4e3333afbb7a9a69d3dafaa50dc0071da58353a872d0461512ad949a1",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "The continuous camera at the optional globe preset. Global land and oceans, Earth axis and ecliptic plane annotations are visible. Paused 2026-10-21 18:00 UTC. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/continuous-orbit.png",
+      "sha256": "7cf6064df9404a802d3ebb2ea2f4f863a036a197376912e1df5958d54e1afe2e",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "The continuous camera at the optional annual-orbit framing preset. Dated Earth orbit samples, actual-scale Earth and Sun, and Earth-axis guides use the same observer and lens as ordinary flight. Paused 2026-10-21 18:00 UTC. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/improvement-startup-ground.png",
+      "sha256": "fae6e46e970720b5d5834186fc01bd194a67bb800cf5ba2e3f8fe83a1414f552",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Completed ground view after asynchronous shader startup; navigation and eye-height panels visible. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/improvement-fisheye-wide.png",
+      "sha256": "919e3c84d866dd46f357ba7e06cb509aaed170e1900a83d070b2398947743b63",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Geometric 140-degree fisheye coast view after exact unused-camera elimination; five active cube faces, source surface unchanged. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/improvement-fisheye-narrow.png",
+      "sha256": "0fb470e7707b87f0119f083548c6a383ec0f89a46cdc71d73d74bbb8ab9c69fc",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Geometric 60-degree fisheye coast view after exact unused-camera elimination; one active cube face, source surface unchanged. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/improvement-loading.png",
+      "sha256": "f5bcaeb9a864e0ba92766ddd842eef62bcd9c122059e1978815133cd4a4a9e05",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Native startup UI while 16 graphics pipelines remain pending; first partial scene covered, task count and Close app visible. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/improvement-refraction.png",
+      "sha256": "10afa97af1d3483e4e0ef5b9c606670ed74070ee15791f79e8e8a63137991b4e",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs"
+      ],
+      "description": "Completed fixed-reference weather horizon and one-pixel L/V guide after asynchronous pipeline startup. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/improvement-orbit.png",
+      "sha256": "4a5b66e7c5415ce2416225bd33a7c55fbccc5195b2678ce1f7967d33270fa2da",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers"
+      ],
+      "description": "Completed continuous world-camera annual orbit view with enlarged axis/plane annotations and physical-scale body locators after asynchronous startup. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-23. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "assets/lunar/color.ael",
+      "sha256": "12e8065af6587222e6933faae21ee3dc8f745786e450a47c08d114c3f36a7917",
+      "sources": [
+        "project",
+        "nasa-svs-lunar"
+      ],
+      "description": "NASA SVS CGI Moon Kit 2019 LROC color-map derivative. Source pixels retained at base resolution; added filtered mip levels and lossless application packaging. Aesthetically processed source RGB is not calibrated reflectance. Exact source URLs, checksums and processing are in assets/lunar/provenance.json. Preserve NASA SVS/LROC/LOLA credits, modifications, rights review and no-endorsement notice."
+    },
+    {
+      "path": "assets/lunar/normal.ael",
+      "sha256": "21f398102477c4786c532c0cd84ea7933b4cc02d22d0823dcafdf4321d174565",
+      "sources": [
+        "project",
+        "nasa-svs-lunar"
+      ],
+      "description": "NASA SVS CGI Moon Kit LOLA height-map derivative: shading normals and filtered mip levels, losslessly packaged for the application. Surface displacement and crater self-shadowing are not implemented. Exact source URLs, checksums and processing are in assets/lunar/provenance.json. Preserve NASA SVS/LROC/LOLA credits, modifications, rights review and no-endorsement notice."
+    },
+    {
+      "path": "assets/lunar/provenance.json",
+      "sha256": "ad4641016a11cbe722e512c958fa11a96f91c906713d588fc5275d131b9458aa",
+      "sources": [
+        "project",
+        "nasa-svs-lunar"
+      ],
+      "description": "Project-authored reproducibility record for NASA SVS CGI Moon Kit color and LOLA shading-normal derivatives, including source URLs and source/derivative SHA-256 checksums. Preserve with the lunar derivatives and NOTICE.md; scientific limits are documented in docs/science/lunar-rendering.md."
+    },
+    {
+      "path": "docs/images/lunar-refraction.png",
+      "sha256": "66e83c15487069552f4e8c0eb9694b9e26aac5fb26ec4e0bf40d94600f991dd7",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native lunar telescope view at the default ground coordinates, 2026-10-21T02:00:00, through the fixed reference atmospheric scenario. No axis overlay in active refraction. Clean-view eye height remains visible. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly fixed NOAA GFS verification snapshot, with its original run, valid time and source provenance in assets/weather/gfs-reference.provenance.json."
+    },
+    {
+      "path": "docs/images/lunar-gibbous-controls.png",
+      "sha256": "2fa64ded443427dfd41131a80004f4a9f9e2680f9c53ef2a6a9f044c1149cfd3",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native gibbous Moon telescope view at the default ground coordinates, 2026-10-21T02:00:00, with Earth/Moon/Sun toolbar, compact panel fonts, panel-edge handles and visible axis/tilt captions. The diagram identifies the Moon pole and emission-epoch orbital normal. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/lunar-full-telescope.png",
+      "sha256": "aadf4f672b5e186c2a27e2daa3f5cf7bbec53613b3c9e68c9a696421db9f5093",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native near-full Moon in rectilinear telescope view at default ground coordinates, 2026-10-26T06:00:00. Clean view preserves lunar pole, emission orbital-plane and tilt guides plus eye height; mean-radius silhouette retained. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/lunar-full-fisheye.png",
+      "sha256": "d586f22bd4cb666ed43918033812aafaa8403a7a925741a4c53c303d254f1392",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native near-full Moon in narrow equidistant-fisheye view after the adaptive source-camera fix, at default ground coordinates, 2026-10-26T06:00:00. Resolved mapped features and smooth mean-sphere limb; clean view preserves lunar axis/plane/tilt guides plus eye height. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/horizon-lock-on.png",
+      "sha256": "bc53dd6e3179b5b1c1a9a5bf220380ac7cb8b6616b486598d3a6240c333134e3",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "nasa-svs-lunar"
+      ],
+      "description": "Horizon lock enabled in the mathematical comparison preset; the toolbar shows the active level icon and the physical curved horizon is retained. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "docs/images/horizon-lock-off.png",
+      "sha256": "d4af4c26ae15aa89e548ba09f298db5c44d05eda09564e2fd071c5aa0529bc2a",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "nasa-svs-lunar"
+      ],
+      "description": "Same paused time, position, heading, pitch and lens as the horizon-lock-on capture, with horizon lock disabled and the preset bank retained. Smooth WGS84 scene; no topographic relief. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-24. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation."
+    },
+    {
+      "path": "assets/weather/hrrr-reference.grib2",
+      "sha256": "c790d1e60909bfbf86c8b0060e7ace3e5f1fc83026b86a2a8aab411621c3b21f",
+      "sources": [
+        "noaa-hrrr"
+      ],
+      "provenance": "assets/weather/hrrr-reference.provenance.json",
+      "provenance_sha256": "1f72baf25b54662833783743ca32cad31edda4ae6b70d7aa819e2eadfd7fb968",
+      "description": "Unmodified NOAA/NCEP GRIB subset for explicit fixed-snapshot regional-weather verification. Source coordinates and values independently checked using GDAL/PROJ. This is not live weather and is never substituted for an unavailable live request. Reviewed NOAA/NWS public-domain terms allow modification and commercial redistribution; preserve provider credit, timestamps, source URL and no-endorsement notice."
+    },
+    {
+      "path": "assets/weather/gfs-regional-reference.grib2",
+      "sha256": "275eff0d7ad21b3d14dbeaac821aa4f5f154558c419374b838a2f89c56e827fd",
+      "sources": [
+        "noaa-gfs"
+      ],
+      "provenance": "assets/weather/gfs-regional-reference.provenance.json",
+      "provenance_sha256": "abcd845470a2d6eaa462ccac48069a62d1bfd4047445fcee60fe53dc52e73cfe",
+      "description": "Unmodified NOAA/NCEP GRIB subset for explicit fixed-snapshot regional-weather verification. Source coordinates and values independently checked using GDAL/PROJ. This is not live weather and is never substituted for an unavailable live request. Reviewed NOAA/NWS public-domain terms allow modification and commercial redistribution; preserve provider credit, timestamps, source URL and no-endorsement notice."
+    },
+    {
+      "path": "docs/images/refraction-terrain-markers-small.png",
+      "sha256": "411a1a8e448da368e99a207ceedac069836ceb57919f430292331f4a698ef348",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr",
+        "nasa-svs-lunar"
+      ],
+      "description": "Bounded 640x360 native diagnostic of the 100-mile Galveston-area downloaded terrain with refracted survey markers and tape in clean view. This diagnostic verifies complete native bindings and visible scene integration at reduced window resolution; it does not establish full-resolution performance. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-25. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-terrain-markers-vulkan.png",
+      "sha256": "46a38973e6216be3dad8f6e88bd60cb26cc286bcce31070d11ca87b26e87f436",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native 1920x1080 Vulkan integration of the 100-mile Galveston-area downloaded terrain with refracted markers and numerical sight/height readouts. This capture explicitly reports an unresolved optical tape projection and contains finite unresolved diagnostic pixels; it does not claim a successful tape overlay or universal numerical accuracy. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-25. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-dx12-geometric-guard.png",
+      "sha256": "802ac86ff96721699ee317ecfac2aec94a21e3a66881a944969da0698d85f8b7",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr",
+        "nasa-svs-lunar"
+      ],
+      "description": "Native 1920x1080 clean-view safeguard check: actual 100-mile coastal Copernicus cached terrain and 81 survey markers, paired frozen regional weather retained. DirectX 12 is explicitly labeled geometric; marker range, tape projection and eye height use that same geometric mode. The backend caption is readable without a duplicate altitude-fallback message. This verifies the fallback presentation, not weather refraction on DirectX 12. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth DirectX 12 screenshot captured 2026-10-25. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-terrain-tape-vulkan.png",
+      "sha256": "f122ec5966df3ef3678dfa07715b5b0ae1a4dc5b86727acf82ae07bd1b15766a",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr",
+        "nasa-svs-lunar"
+      ],
+      "description": "Final native 1920x1080 Vulkan scene with the independently reviewed marker-edge tape retry and exact fixed-point iteration optimization. Actual 100-mile coastal Copernicus cache, 81 marker row, paired fixed regional weather. Curved marker range and thin tape line with both endpoint labels are visible; the unresolved tape banner is absent. The footer identifies terrain, markers and reference surface. Sparse purple unresolved pixels remain near contact boundaries. This finite presentation check does not establish exact physical weather or responsive flight. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-25. Earth photographic imagery remains removed. Lunar appearance uses the reviewed NASA SVS LROC color and LOLA-derived shading-normal maps with source/derivative hashes in assets/lunar/provenance.json; preserve NASA SVS, LROC, LOLA and ASU credits and the modifications and no-endorsement notice. The adopted lunar silhouette and intersection surface remain spherical. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-compute-packet.png",
+      "sha256": "5d6ebb2fb85f46e5f152f6bbb8aee7578ea777d91383de4d12717bc2039d18c4",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr"
+      ],
+      "description": "Native same-frame compute/compositor integration check using the existing midpoint ray solver, before the new solver is enabled. Galveston cached 100-mile download, 81 physical survey markers and a tape on marker 0001; fixed paired weather, paused astronomical date 2026-10-25 18:00 UTC. The 1920x1080 capture verifies visible integration only and is not a timing or smooth-flight result. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-25. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-stellar-night-shared.png",
+      "sha256": "63bf2c18723003e4eada53654fc4fdc1f6bd71a4ba8318d172010390b35c2f79",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr"
+      ],
+      "description": "Unmodified native 1920x1080 nighttime validation screenshot using the existing midpoint physical solver, with shared stellar inverse scheduling. Paused astronomical date 2026-10-25 06:00 UTC, fixed star phase0, Galveston cached terrain, 81 survey markers, and clean view. This preserves the pre-fix comparison: the shared version has visible marker-number corruption under investigation. It is not proof of visual equivalence or smooth flight. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-26 UTC. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-stellar-night-original.png",
+      "sha256": "6d4dc436f563f4769d470f7175caacc0b4025d5e7a9c353577a33c04005dd823",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr"
+      ],
+      "description": "Unmodified native 1920x1080 nighttime validation screenshot using the existing midpoint physical solver, with original stellar inverse scheduling. Paused astronomical date 2026-10-25 06:00 UTC, fixed star phase0, Galveston cached terrain, 81 survey markers, and clean view. This preserves the pre-fix comparison: the shared version has visible marker-number corruption under investigation. It is not proof of visual equivalence or smooth flight. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-26 UTC. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-stellar-sign-shared.png",
+      "sha256": "41c511059969d56420ec2c1469c3a0eaa95145825ef535af8b99e096b4311b51",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr"
+      ],
+      "description": "Unmodified native 1920x1080 nighttime validation screenshot after the integer glyph lookup change, with shared stellar inverse scheduling. Paused astronomical date 2026-10-25 06:00 UTC, fixed star phase 0, Galveston cached terrain, 81 survey markers, and clean view. Separate from the preserved pre-fix screenshots. This is a visual regression capture, not a timing or smooth-flight result. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-26 UTC. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
+    },
+    {
+      "path": "docs/images/refraction-stellar-sign-original.png",
+      "sha256": "3d488d334b5e4e04b01ba0f0846d2ee93866cd38e179da632183e8c1061aefa3",
+      "sources": [
+        "project",
+        "copernicus",
+        "natural-earth",
+        "nga",
+        "jpl-naif",
+        "astropy-iers",
+        "noaa-gfs",
+        "noaa-hrrr"
+      ],
+      "description": "Unmodified native 1920x1080 nighttime validation screenshot after the integer glyph lookup change, with original stellar inverse scheduling. Paused astronomical date 2026-10-25 06:00 UTC, fixed star phase 0, Galveston cached terrain, 81 survey markers, and clean view. Separate from the preserved pre-fix screenshots. This is a visual regression capture, not a timing or smooth-flight result. Imported terrain uses unchanged cached Copernicus GLO-30 Public files from the reviewed AWS 2021 distribution, with per-tile EULA hash verification and cache provenance validated by the offline import. The capture description identifies the selected area. Derived source-post mesh and NGA EGM2008 conversion are documented in docs/science/topography.md; full source rights and modifications follow NOTICE.md. Unmodified native Ancient Earth Vulkan screenshot captured 2026-10-26 UTC. Original procedural presentation; no photographic imagery. Uses previously source-reviewed project MIT software and credited datasets. Full provider attribution, modification notices and redistribution terms remain in NOTICE.md and licenses/. Embedded fonts and software retain THIRD_PARTY_LICENSES.txt notices. Star positions are original and atmospheric twinkling uses a declared reference-turbulence model, not a measured star catalog or local optical-turbulence observation. Atmospheric profile: explicitly selected fixed NOAA HRRR near-surface and GFS vertical-column verification snapshots. Original inputs, run/valid times, source URLs and hashes remain in assets/weather/hrrr-reference.provenance.json and assets/weather/gfs-regional-reference.provenance.json. This is a modified optical scenario, not observed live weather; no NOAA endorsement."
     }
   ]
 }

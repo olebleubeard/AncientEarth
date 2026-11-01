@@ -34,7 +34,7 @@ def reference_text(source: Path) -> str:
             for band in range(1, dataset.count + 1):
                 tags = dataset.tags(band)
                 level, element = tags["GRIB_SHORT_NAME"], tags["GRIB_ELEMENT"]
-                if not (level.endswith("-ISBL") or level in ("0-SFC", "2-HTGL")):
+                if not (level.endswith("-ISBL") or level in ("0-SFC", "2-HTGL", "80-HTGL")):
                     continue
                 if (tags["GRIB_REF_TIME"], tags["GRIB_VALID_TIME"], tags["GRIB_FORECAST_SECONDS"]) != (
                     "1792584000", "1792609200", "25200"
@@ -60,6 +60,9 @@ def reference_text(source: Path) -> str:
         f"pub const SURFACE_GEOPOTENTIAL_M: f64 = {fields['0-SFC', 'HGT']!r};",
         f"pub const TEMPERATURE_2M_K: f64 = {fields['2-HTGL', 'TMP']!r};",
         f"pub const SPECIFIC_HUMIDITY_2M: f64 = {fields['2-HTGL', 'SPFH']!r};",
+        f"pub const TEMPERATURE_80M_K: f64 = {fields['80-HTGL', 'TMP']!r};",
+        f"pub const PRESSURE_80M_PA: f64 = {fields['80-HTGL', 'PRES']!r};",
+        f"pub const SPECIFIC_HUMIDITY_80M: f64 = {fields['80-HTGL', 'SPFH']!r};",
         "// Pressure Pa, geopotential height gpm, temperature K, specific humidity kg/kg.",
         "#[rustfmt::skip]",
         "pub const PRESSURE_LEVELS: &[(f64, f64, f64, f64)] = &[",

@@ -1,0 +1,22 @@
+# Union with optical_normal_scene_inputs.txt in verify_optical_wavefront.ps1.
+scripts/optical_cartesian_suffix_fixture.rs
+scripts/optical_cartesian_clearance.wgsl
+scripts/optical_normal_interval.wgsl
+scripts/optical_shader_reachability.rs
+scripts/test_optical_cartesian_clearance.py
+scripts/test_optical_normal_map_interval.py
+scripts/test_optical_normal_intervals.py
+scripts/test_optical_normal_residual.py
+scripts/test_optical_cartesian_suffix_policy.py
+scripts/verify_optical_dop853.py
+src/desktop/shaders/refraction_dopri_hermite.wesl
+src/desktop/shaders/refraction_dopri_hermite_trace.wesl
+docs/science/cartesian-suffix-design.md
+scripts/review_optical_cartesian_suffix_baseline.py
+scripts/review_optical_cartesian_suffix_policy.py
+artifacts/optical-cartesian-suffix-selected-baseline-first.json
+artifacts/optical-cartesian-suffix-selected-baseline-first-contract.json
+artifacts/optical-cartesian-suffix-selected-scope-amendment-first.json
+artifacts/optical-atmosphere-gpu-review-summary.json
+artifacts/optical-normal-scene-reference-selected-frames.bin
+artifacts/optical-normal-scene-reference-selected-geometry.bin

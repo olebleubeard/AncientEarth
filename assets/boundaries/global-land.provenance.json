@@ -1,0 +1,29 @@
+{
+  "schema": "ancientearth.global-land.v1",
+  "source_name": "Natural Earth 1:10 million land v5.1.1",
+  "source_url": "https://naciscdn.org/naturalearth/10m/physical/ne_10m_land.zip",
+  "source_page": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/10m-land/",
+  "license_url": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "license": "Public domain",
+  "source_sha256": "e547d749445eaa0964aba76738090ec88f5e63c4585122170f98c67a7ea922dc",
+  "source_records": 11,
+  "outer_rings": 6837,
+  "inland_holes": 1,
+  "output_file": "global-land.ael",
+  "output_sha256": "4d81942b96266b90d9bddc8a9466ca2ccbf24f1f136c7b2888a5088f5761c5ca",
+  "grid": {
+    "width": 36000,
+    "height": 18000,
+    "cell_degrees": 0.01,
+    "cell_center": "longitude=-180+(column+0.5)*0.01; latitude=90-(row+0.5)*0.01"
+  },
+  "category_counts_land_ocean_inland_water": [
+    214294760,
+    433275733,
+    429507
+  ],
+  "run_count": 543304,
+  "encoding": "AEGLND01; u32 width,height,run_count; u32 row_offsets[height+1]; u32 runs[run_count]=(exclusive_end_column<<2)|class; 0land,1ocean,2enclosed-inland-water",
+  "modification": "Original polygon vertices parsed in geographic WGS84 degrees; GDAL default center-cell polygon rasterization at0.01degree; inland holes retained separately; exact row run-length encoding. No imagery or elevation input/output.",
+  "scope": "Coarse cartographic land/ocean context only. Does not supply surveyed shoreline, water heights, sea-level/tide, bathymetry or DEM coverage. Higher-priority local reconstructed boundaries and downloaded native WBM override it."
+}

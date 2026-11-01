@@ -1,0 +1,10 @@
+{
+  "source": "NOAA / NCEP Global Forecast System (GFS)",
+  "source_url": "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?file=gfs.t00z.pgrb2.0p25.f009&all_lev=on&var_TMP=on&var_SPFH=on&var_HGT=on&var_PRES=on&subregion=&leftlon=265.00&rightlon=265.50&toplat=29.50&bottomlat=29.00&dir=%2Fgfs.20261025%2F00%2Fatmos",
+  "terms_url": "https://www.weather.gov/disclaimer",
+  "fetched_utc": "2026-10-25T19:13:19.062516+00:00",
+  "sha256": "275eff0d7ad21b3d14dbeaac821aa4f5f154558c419374b838a2f89c56e827fd",
+  "modifications": "Original NOAA NOMADS server subset; downloaded GRIB bytes retained without local binary modification. Ancient Earth derives a separate optical scenario, not an official NOAA product.",
+  "output_sha256": "275eff0d7ad21b3d14dbeaac821aa4f5f154558c419374b838a2f89c56e827fd",
+  "rights": "Original NOAA/NCEP public-domain data; use, modification and commercial redistribution permitted. Retain attribution and modification notices. No NOAA endorsement."
+}

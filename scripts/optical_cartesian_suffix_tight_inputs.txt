@@ -1,0 +1,16 @@
+# Union with the unchanged suffix, trace and common scene inventories.
+scripts/optical_cartesian_suffix_tight_fixture.rs
+docs/science/cartesian-suffix-tight-control.md
+scripts/review_optical_cartesian_suffix_trace.py
+artifacts/optical-cartesian-suffix-trace-selected-first.json
+artifacts/optical-cartesian-suffix-trace-selected-first-readback.bin
+artifacts/optical-cartesian-suffix-trace-selected-first-states.bin
+artifacts/optical-cartesian-suffix-trace-selected-first-progress.bin
+artifacts/optical-cartesian-suffix-trace-selected-first-auxiliary.bin
+artifacts/optical-cartesian-suffix-trace-selected-first-prefix.wgsl
+artifacts/optical-cartesian-suffix-trace-selected-first-suffix.wgsl
+artifacts/optical-cartesian-suffix-trace-selected-first-fallback.wgsl
+artifacts/optical-cartesian-suffix-trace-selected-first-independent-review.json
+artifacts/optical-cartesian-suffix-trace-selected-first-design.md
+artifacts/optical-cartesian-suffix-trace-selected-first-host.rs
+artifacts/optical-cartesian-suffix-trace-selected-first-wrapper.ps1

@@ -22,7 +22,9 @@ fn grid_roundtrip_including_poles_dateline_and_negative_height() {
         -90.0, -89.999999, -70.0, -45.0, -0.001, 0.0, 23.5, 89.999999, 90.0,
     ] {
         for lon in [-180.0, -145.0, -0.1, 0.0, 45.0, 179.9999, 180.0] {
-            for height in [MIN_HEIGHT_M, -500.0, 0.0, 1.72, 1000.0, 1e7, MAX_HEIGHT_M] {
+            // Preserve the original near-Earth precision contract. Independent
+            // high-precision fixtures cover the expanded four-AU domain.
+            for height in [MIN_HEIGHT_M, -500.0, 0.0, 1.72, 1000.0, 1e7, 1e9] {
                 let source = Geodetic::new(lat, lon, height).unwrap();
                 let ecef = geodetic_to_ecef(source);
                 let recovered = ecef_to_geodetic(ecef).unwrap();

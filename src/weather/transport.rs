@@ -10,8 +10,19 @@ use std::{
 };
 
 const NOAA_PREFIX: &str = "https://nomads.ncep.noaa.gov/cgi-bin/filter_gfs_0p25.pl?";
+const HRRR_PREFIX: &str = "https://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_2d.pl?";
 const MAX_GRIB_BYTES: u64 = 16 * 1024 * 1024;
 const MAX_METADATA_BYTES: u64 = 16 * 1024;
+
+fn source_name(url: &str) -> Option<&'static str> {
+    if url.starts_with(NOAA_PREFIX) {
+        Some("NOAA / NCEP Global Forecast System (GFS)")
+    } else if url.starts_with(HRRR_PREFIX) {
+        Some("NOAA / NCEP High-Resolution Rapid Refresh (HRRR)")
+    } else {
+        None
+    }
+}
 
 pub(super) struct Payload {
     pub bytes: Vec<u8>,
@@ -54,7 +65,11 @@ fn bounded_read(path: &Path, limit: u64) -> Option<Vec<u8>> {
 fn cached_payload(directory: &Path, url: &str) -> Option<Payload> {
     let metadata = bounded_read(&directory.join("latest.json"), MAX_METADATA_BYTES)?;
     let record: Value = serde_json::from_slice(&metadata).ok()?;
-    if record["schema"] != "ancientearth.weather-cache.v1" || record["source_url"] != url {
+    if record["schema"] != "ancientearth.weather-cache.v1"
+        || record["source_url"] != url
+        || record["source"].as_str() != source_name(url)
+        || record["terms_url"] != "https://www.weather.gov/disclaimer"
+    {
         return None;
     }
     let bytes = bounded_read(&directory.join("latest.grib2"), MAX_GRIB_BYTES)?;
@@ -69,13 +84,19 @@ fn cached_payload(directory: &Path, url: &str) -> Option<Payload> {
 }
 
 pub(super) fn save_cache(directory: &Path, url: &str, payload: &Payload) -> std::io::Result<()> {
+    let source = source_name(url).ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Unapproved weather endpoint",
+        )
+    })?;
     fs::create_dir_all(directory)?;
     // Two fixed files bound disk usage. A partial write or concurrent process
     // cannot be accepted: the reader requires a matching URL and payload hash.
     fs::write(directory.join("latest.grib2"), &payload.bytes)?;
     let record = json!({
         "schema": "ancientearth.weather-cache.v1",
-        "source": "NOAA / NCEP Global Forecast System (GFS)",
+        "source": source,
         "source_url": url,
         "fetched_unix": payload.fetched_unix,
         "sha256": sha256(&payload.bytes),
@@ -97,7 +118,7 @@ pub(super) fn load_or_fetch(
     if cancelled.load(Ordering::Relaxed) {
         return Err("Weather request cancelled".into());
     }
-    if !url.starts_with(NOAA_PREFIX) {
+    if source_name(url).is_none() {
         return Err("Weather request is not the approved NOAA endpoint".into());
     }
     if let Some(payload) = directory.and_then(|directory| cached_payload(directory, url)) {
@@ -175,5 +196,42 @@ mod tests {
         let cancelled = AtomicBool::new(true);
         assert!(load_or_fetch(NOAA_PREFIX, None, &cancelled).is_err());
         assert!(load_or_fetch("https://example.com/", None, &AtomicBool::new(false)).is_err());
+        assert!(
+            source_name("https://nomads.ncep.noaa.gov.evil.test/cgi-bin/filter_hrrr_2d.pl?")
+                .is_none()
+        );
+        assert!(source_name("http://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_2d.pl?").is_none());
+        assert!(source_name("https://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_sub.pl?").is_none());
+    }
+
+    #[test]
+    fn hrrr_cache_preserves_its_provider_and_rejects_mislabeled_provenance() {
+        let directory = std::env::temp_dir().join(format!(
+            "ancientearth-hrrr-cache-test-{}",
+            std::process::id()
+        ));
+        let payload = Payload {
+            bytes: b"GRIBregional cache fixture".to_vec(),
+            cached: false,
+            fetched_unix: 1,
+        };
+        let url = format!("{HRRR_PREFIX}fixture=1");
+        save_cache(&directory, &url, &payload).unwrap();
+        assert_eq!(
+            cached_payload(&directory, &url).unwrap().bytes,
+            payload.bytes
+        );
+        let metadata_path = directory.join("latest.json");
+        let mut record: Value = serde_json::from_slice(&fs::read(&metadata_path).unwrap()).unwrap();
+        assert_eq!(
+            record["source"],
+            "NOAA / NCEP High-Resolution Rapid Refresh (HRRR)"
+        );
+        record["source"] = json!("another provider");
+        fs::write(&metadata_path, serde_json::to_vec(&record).unwrap()).unwrap();
+        assert!(cached_payload(&directory, &url).is_none());
+        fs::remove_file(metadata_path).unwrap();
+        fs::remove_file(directory.join("latest.grib2")).unwrap();
+        fs::remove_dir(directory).unwrap();
     }
 }

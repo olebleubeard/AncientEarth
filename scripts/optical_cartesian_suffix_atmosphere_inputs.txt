@@ -1,0 +1,9 @@
+# Union with branch and common/suffix/trace/tight inventories.
+scripts/optical_cartesian_suffix_atmosphere_fixture.rs
+scripts/optical_gpu_probe.rs
+docs/science/cartesian-suffix-matrix-policy.md
+crates/earth-math/src/atmosphere.rs
+crates/earth-math/src/atmosphere/gpu.rs
+crates/earth-math/src/atmosphere/gpu/scene.rs
+crates/earth-math/src/rendering.rs
+crates/earth-math/src/lib.rs

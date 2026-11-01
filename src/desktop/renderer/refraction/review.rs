@@ -1,6 +1,140 @@
 //! Independent audit of packed source-category buffers and local GPU lookup.
 use super::*;
 
+#[test]
+fn compact_primary_uniform_is_lossless_and_native_terminal_sizes_are_checked() {
+    use bevy::render::render_resource::encase;
+    let record = |index: u32| {
+        Vec4::from_array(std::array::from_fn(|component| {
+            f32::from_bits(0x3e80_0000 + index * 16 + component as u32)
+        }))
+    };
+    let view = Settings {
+        q0: record(0),
+        q1: record(1),
+        q2: record(2),
+        origin: record(3),
+        center: record(4),
+        right: record(5),
+        up: record(6),
+        forward: record(7),
+        lens: record(8),
+        budget: record(9),
+        scene: record(10),
+        layers: std::array::from_fn(|i| record(100 + i as u32)),
+        // These shading-only fields must not displace the compact trace data.
+        latitude: record(800),
+        sun: record(801),
+        control: UVec4::new(1, 2, 3, 4),
+        ..Settings::default()
+    };
+    // Both halves exceed f32's exact-integer domain: the token must remain u32.
+    let control = UVec4::new(33, 3, 0x8000_0001, 0xff00_0001);
+    let compact = compute::PrimarySettings::from_view(&view, control);
+    let mut encoded = encase::UniformBuffer::new(Vec::new());
+    encoded.write(&compact).unwrap();
+    let bytes = encoded.into_inner();
+    let actual: Vec<_> = bytes
+        .chunks_exact(4)
+        .map(|word| u32::from_le_bytes(word.try_into().unwrap()))
+        .collect();
+    let mut expected = Vec::new();
+    for i in 0..11 {
+        expected.extend(record(i).to_array().map(f32::to_bits));
+    }
+    expected.extend(control.to_array());
+    for i in 0..128 {
+        expected.extend(record(100 + i).to_array().map(f32::to_bits));
+    }
+    assert_eq!(actual, expected);
+    assert_eq!(bytes.len(), 2240); // 12 aligned vec4 records + 128 layer records.
+
+    assert_eq!(compute::terminal_buffer_bytes(0, 1080), None);
+    assert_eq!(compute::terminal_buffer_bytes(1920, 0), None);
+    assert_eq!(compute::terminal_buffer_bytes(1, 1), Some(64));
+    assert_eq!(compute::terminal_buffer_bytes(1920, 1080), Some(99_532_816));
+    assert_eq!(compute::terminal_buffer_bytes(u32::MAX, u32::MAX), None);
+    let exact_limits = bevy::render::settings::WgpuLimits {
+        max_storage_buffer_binding_size: 99_532_816,
+        max_buffer_size: 99_532_816,
+        max_compute_workgroups_per_dimension: 1080,
+        max_compute_workgroup_size_x: 32,
+        max_compute_workgroup_size_y: 1,
+        max_compute_workgroup_size_z: 1,
+        max_compute_invocations_per_workgroup: 32,
+        ..Default::default()
+    };
+    assert!(compute::target_supported(1920, 1080, &exact_limits));
+    for limits in [
+        bevy::render::settings::WgpuLimits {
+            max_storage_buffer_binding_size: 99_532_815,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_buffer_size: 99_532_815,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_compute_workgroups_per_dimension: 1079,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_compute_workgroup_size_x: 31,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_compute_invocations_per_workgroup: 31,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_compute_workgroup_size_y: 0,
+            ..exact_limits.clone()
+        },
+        bevy::render::settings::WgpuLimits {
+            max_compute_workgroup_size_z: 0,
+            ..exact_limits.clone()
+        },
+    ] {
+        assert!(!compute::target_supported(1920, 1080, &limits));
+    }
+    for (width, height) in [(0, 1), (1, 0), (u32::MAX, u32::MAX)] {
+        assert!(!compute::target_supported(width, height, &exact_limits));
+    }
+    let two_groups = bevy::render::settings::WgpuLimits {
+        max_compute_workgroups_per_dimension: 2,
+        ..exact_limits.clone()
+    };
+    assert!(compute::target_supported(33, 2, &two_groups));
+    assert!(compute::target_supported(64, 2, &two_groups));
+    assert!(!compute::target_supported(65, 2, &two_groups));
+    assert!(!compute::target_supported(1, 3, &two_groups));
+    for (width, height) in [(1_u32, 1_u32), (31, 2), (32, 2), (33, 3), (1920, 9)] {
+        let mut ownership = vec![0_u8; (width * height) as usize];
+        for y in 0..height {
+            for group in 0..width.div_ceil(32) {
+                for lane in 0..32 {
+                    let x = group * 32 + lane;
+                    if x < width {
+                        ownership[(y * width + x) as usize] += 1;
+                    }
+                }
+            }
+        }
+        assert!(ownership.iter().all(|count| *count == 1));
+        let last_record = 1_u64 + 3 * (u64::from(width) * u64::from(height) - 1) + 2;
+        assert_eq!(
+            (last_record + 1) * 16,
+            compute::terminal_buffer_bytes(width, height).unwrap()
+        );
+    }
+    let shader = primary::primary_shader();
+    let source = include_str!("../../shaders/refraction.wesl");
+    let core = &source[source.find("fn qmul").unwrap()..source.find("fn relative_angles").unwrap()];
+    assert!(shader.contains(core));
+    assert_eq!(shader.matches("fn trace(").count(), 1);
+    assert!(!shader.contains("fn radiance("));
+}
+
 fn sample(
     data: &[[f32; 4]],
     region: &Region,

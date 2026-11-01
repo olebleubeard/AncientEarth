@@ -1,0 +1,16 @@
+# Original-only returning event freezer; no candidate or old prescribed endpoint.
+scripts/review_optical_cartesian_returning_baseline.py
+scripts/verify_optical_cartesian_turning.py
+scripts/review_optical_cartesian_suffix_source.py
+scripts/optical_cartesian_returning_reference_inputs.txt
+scripts/optical_cartesian_suffix_turning_fixture.rs
+scripts/optical_cartesian_composite_fixture.rs
+docs/science/cartesian-composite-f64-policy.md
+artifacts/optical-bouguer-reference.json
+artifacts/optical-cartesian-f64-source-review-first.json
+artifacts/optical-cartesian-f64-selected-validation-first-prefix.wgsl
+artifacts/optical-cartesian-f64-selected-validation-first-suffix.wgsl
+artifacts/optical-cartesian-f64-selected-validation-first-fallback.wgsl
+artifacts/optical-cartesian-f64-selected-validation-first-primary.bin
+artifacts/optical-cartesian-f64-selected-validation-first-field.bin
+artifacts/optical-cartesian-f64-selected-validation-first-certificates.bin

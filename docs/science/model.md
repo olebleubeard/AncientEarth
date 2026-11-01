@@ -1,8 +1,8 @@
 # Scientific model and conventions
 
-AncientEarth uses the **smooth analytic WGS84 ellipsoid everywhere**, with land and every water category at ellipsoidal height h=0. Regional Copernicus Water Body Masks supply only categorical boundaries. Their height-free importer reads no DSM or geoid inputs. The same analytic f64 surface governs Earth range, ground placement, collision and geometric horizon; finite GPU triangles and materials provide presentation. [water.md](water.md) documents categorical reconstruction and its finite source limits.
+AncientEarth starts with the **smooth analytic WGS84 ellipsoid**, with land and every water category at ellipsoidal height h=0. Optional [downloaded Copernicus elevations](topography.md) replace covered regions with a canonical f64 source-post triangle mesh; disabling Elevations restores the smooth model and keeps the cache. Range, ground placement, collision and geometric horizon use the selected physical model. Independent categories use reconstructed regional Copernicus borders first, then downloaded native Water Body Masks, then global Natural Earth vector context. The latter evaluates original geographic polygon segments through a bounded adaptive index, without replacing coastlines by raster cells or adding source detail. These category importers read no DSM or geoid heights; [water.md](water.md) documents their source registration and finite limits.
 
-No city catalog, pins, named-place runtime presets, photographic imagery or topographic height files are active. Historical elevation/imagery code and fixtures remain archived with their notices. The optional EGM2008 readout is a separate datum comparison and never displaces the surface.
+No city catalog, pins, named-place runtime presets or photographic imagery is active. Historical bundled terrain/imagery fixtures remain archived with their notices; new user-requested terrain imports use the current strict decoder. EGM2008 remains a separate HUD datum comparison in smooth mode and supplies the source-height conversion h=H+N in downloaded-terrain mode.
 
 ## What the coordinates mean
 
@@ -10,13 +10,13 @@ The model uses the defining WGS84 semi-major axis `a = 6,378,137 m` and inverse 
 
 Latitude is **geodetic** latitude: the ellipsoid normal's angle above the equatorial plane, not the geocentric radius's angle. Longitude is positive east. ECEF coordinates are metres, with X through latitude 0°, longitude 0°; Y through latitude 0°, longitude 90°E; and Z through the north pole.
 
-Heights are measured along the ellipsoid normal. They are **not elevation above mean sea level**, height above terrain, or local building height. The coordinate input records the observer's feet height. Eye height is added separately. Ground navigation places the feet at h=0 along that normal. The general conversion library supports negative heights for datum calculations and archived fixtures, but active navigation rejects feet below zero.
+Heights are measured along the ellipsoid normal. They are **not elevation above mean sea level**, height above terrain, or local building height. The coordinate input records the observer's feet height. Eye height is added separately. Ground navigation places the feet on the active surface along that normal. Smooth mode rejects feet below zero; imported negative terrain remains valid and navigation rejects positions below that actual mesh.
 
 The separate vertical HUD also reports the global EGM2008 geoid beneath the current latitude/longitude, `H = h − N` heights above that reference, and eye/feet clearances above the active ground. These clearances are along geodetic up, not shortest distances to slopes. Every native 2.5-arc-minute geoid sample is preserved; bilinear interpolation does not remove source uncertainty. The geoid is a modeled sea-level reference, not the instantaneous ocean surface. See [geoid.md](geoid.md) for the data, registration, height equations and limitations.
 
-Exact-coordinate navigation rejects feet heights below the active surface or so high that the eyes would exceed the supported height ceiling. Rejected input leaves the current position unchanged. It does not silently adjust the requested destination. The separate ground action explicitly snaps to the surface. Toggling boundary categories cannot change the physical surface. Flight and overview have explicit surface and ceiling constraints.
+Exact-coordinate navigation rejects feet heights below the active surface or so high that the eyes would exceed the supported height ceiling. Rejected input leaves the current position unchanged. It does not silently adjust the requested destination. The separate ground action explicitly snaps to the surface. Toggling boundary categories cannot change the physical surface. Continuous flight and explicit fit actions have surface and ceiling constraints; there is no parked second observer.
 
-The conversion library's supported height interval is −10,000 m to +1,000,000,000 m. Deep-Earth Cartesian positions are intentionally rejected rather than choosing among ambiguous geodetic solutions. At a pole, longitude and heading describe a conventional orientation; the position itself does not determine a unique longitude.
+The conversion library's supported height interval is −10,000 m through four exact astronomical units (598,391,482,800 m). One authoritative observer spans this range; see [continuous-flight.md](continuous-flight.md) for the finite numerical domain and kinematic controls. Deep-Earth Cartesian positions are intentionally rejected rather than choosing among ambiguous geodetic solutions. At a pole, longitude and heading describe a conventional orientation; the position itself does not determine a unique longitude.
 
 ## Geodetic conversion
 
@@ -39,6 +39,8 @@ This expression avoids division by small sine or cosine values at the equator or
 
 ## Eye position and local orientation
 
+The ordinary startup feet coordinate is the requested geodetic latitude/longitude `29.305549°, −94.767015°` at smooth WGS84 `h=0`, initially facing east. The configured eye offset is added along geodetic up. The explicit overview option changes this ground-level pose.
+
 The person's stature is exactly six **international** feet, or 1.8288 m. The default standing eye height is **1.72 m**, with a **1.00 m** crouching eye height, both above the feet and both explicit configurable application assumptions. Stature alone cannot determine a particular person's anatomical eye height. The conversion uses the international foot, exactly 0.3048 m, as described by [NIST](https://www.nist.gov/pml/us-surveyfoot).
 
 Crouching uses the smaller configured eye offset and preserves the feet position. The resulting eye altitude changes the camera origin, dot range and skyline query. Standing headroom remains reserved at the supported altitude ceiling while crouched; rejected posture changes do not move the feet.
@@ -53,13 +55,13 @@ up    = ( cosφ cosλ,  cosφ sinλ, sinφ)
 
 Heading increases clockwise from north. Pitch is positive above the local horizon. Before roll, forward follows heading and pitch, right is horizontal, and camera up is `right × forward`. Positive roll is right-handed about forward and rotates both camera right and up. The complete triad is preserved by the nonrotating observer mode; see [reference-frames.md](reference-frames.md).
 
-Flight combines forward/back, right/left, and local up/down, then normalizes the resulting direction so diagonal input does not increase speed. Movement is a straight ECEF displacement, not a geodesic, orbit, or aerodynamics simulation. After moving, the old ECEF forward and camera-up axes are re-expressed in the new local frame, including roll: the camera keeps its world orientation and forward flight continues through the poles. Collision sweeps the feet against the analytic ellipsoid and validates the endpoint. A frame uses at most 0.25 seconds of movement time to prevent a long UI pause from producing a large unintended step. Shift multiplies speed by eight.
+Flight combines camera forward/back, right/left, and body up/down, then normalizes the resulting direction so diagonal input does not increase speed. Space and Shift move along positive and negative camera up, including the current pitch and bank; Q/E roll about camera forward when [horizon lock](horizon-lock.md) is inactive. The default lock removes bank through a declared 100 km WGS84 eye-height threshold while leaving heading, pitch, position and actual horizon shape unchanged. Movement is a straight ECEF displacement, not a geodesic, orbit, or aerodynamics simulation. After moving, the old ECEF forward and camera-up axes are re-expressed in the new local frame, including roll: the camera keeps its world orientation and forward flight continues through the poles. Movement checks canonical surface intersections and validates the feet endpoint: the analytic ellipsoid in smooth mode, or the imported triangles and masked fallback in terrain mode. A frame uses at most 0.25 seconds of movement time to prevent a long UI pause from producing a large unintended step. Ctrl multiplies speed by 0.1. G lands on the active ground, preserves horizontal heading where defined, and resets pitch/roll to a geodetically upright and level view. The eye offset remains geodetic even while the camera is banked. The current controller integrates an optional clearance-adaptive speed law with bounded RK4 step doubling and conservatively rejects uncertain whole-patch underpasses. It does not claim a universal swept-volume certificate across arbitrary discontinuous coverage. [Continuous flight](continuous-flight.md) defines the law, numerical budget and limitations.
 
 ## Range at the dot
 
 In geometric mode, the measurement is a separate ray from the **eye** along camera forward. It does not read a depth buffer or infer distance from the displayed raster. The value is Euclidean line-of-sight distance in metres to the nearest eligible nonnegative intersection with the analytic WGS84 ellipsoid. It is not surface distance, geodesic distance, or travel distance. GPU display geometry samples that surface with finite tessellation differences; it does not replace this measurement query.
 
-The following equations describe the active analytic surface. Archived triangle algorithms in [terrain.md](terrain.md) are not used for runtime Earth measurements:
+The following equations describe the smooth reference surface and fallback. Optional downloaded terrain uses the shared triangle/BVH model documented in [topography.md](topography.md):
 
 For a ray `P + tD`, dividing coordinates by `(a,a,b)` transforms the ellipsoid into a unit sphere. The direction is normalized after this transform. With scaled origin `O` and scaled unit direction `U`:
 
@@ -77,13 +79,15 @@ A negative discriminant within the documented floating-point roundoff threshold 
 
 The dot additionally tests visible grass blades using the current shared wind weights, eye-dependent fade and quantized local vertex attributes, and the apparent spherical Sun and Moon. The grass query follows the GPU deformation model, subject to finite GPU arithmetic/rasterization differences. A celestial target is selected only if nearer than an existing Earth/grass hit. Body labels distinguish nominal/mean-radius spheres from terrain. These are apparent display-model ranges, not lunar topography or surface-specific light-time solutions. A ray that misses all measured surfaces reports **no surface hit**. Analytic queries use no arbitrary distance sentinel or far clipping plane; GPU presentation has separate finite clipping.
 
-With a valid enabled atmospheric profile, the dot instead follows the shared curved-ray model. The displayed geometric path is the integral of arc length; phase optical path integrates refractive index, and a straight chord is separately defined. The first ellipsoid crossing blocks the sky. An escaping ray continues through vacuum to the existing apparent Sun/Moon spheres. Decorative grass is excluded in this optical mode. See [refraction.md](refraction.md) for data mapping, equations and error limits.
+Survey prisms add exact oriented-box intersections to geometric measurement. Tape selection compares the nearest Earth and prism boundaries, excluding decorative grass and celestial bodies; its primary metric is the ECEF endpoint chord, with a separately labeled h=0 geodesic. The Earth-hidden height query tests the prism's vertical centerline, not its whole cross-section. Smooth-Earth transitions use actual ellipsoid rays and bisection; terrain uses a disclosed finite sample search. See [survey.md](survey.md) for placement, dimensions, equations and limits.
+
+With a valid enabled atmospheric profile and no active survey tools or downloaded elevations, the dot instead follows the shared curved-ray model. The displayed geometric path is the integral of arc length; phase optical path integrates refractive index, and a straight chord is separately defined. The first ellipsoid crossing blocks the sky. An escaping ray continues through vacuum to the existing apparent Sun/Moon spheres. Decorative grass is excluded in this optical mode. See [refraction.md](refraction.md) for data mapping, equations and error limits.
 
 ## Heading-specific skyline
 
-With refraction disabled, the skyline readout measures the upper angular outline in the vertical plane of the current heading, using the current eye origin. It solves the analytic WGS84 tangent and reports the corresponding eye-origin range. It is independent of pitch, image resolution and telescope zoom. It does not mean the farthest visible object or atmospheric visibility.
+With refraction disabled, the skyline readout measures the upper angular outline in the vertical plane of the current heading, using the current eye origin. Smooth mode solves the analytic WGS84 tangent; terrain mode also tests canonical triangle-section extrema and masked fallback. It reports the corresponding eye-origin range, independently of pitch, image resolution and telescope zoom. It does not mean the farthest visible object or atmospheric visibility.
 
-Regional material boundaries cannot hide or raise the geometric horizon. The archived terrain solver retains separate finite-search limitations for historical tests; it is not the current runtime model. See [visibility.md](visibility.md).
+Regional material boundaries cannot hide or raise the geometric horizon. Downloaded elevations can do so: their heading-plane triangle-section candidates and masked fallback have the finite-search limitations described in [visibility.md](visibility.md).
 
 ## Projection and telescope
 
@@ -97,9 +101,9 @@ GPU rendering uses the native display resolution, with finite single-precision c
 
 ## What is and is not accurate
 
-- Geometry, collision and Earth range consistently use the smooth analytic WGS84 ellipsoid with f64 arithmetic. This is deliberately not topographic Earth or physical sea level.
-- WBM classes and reconstructed borders retain finite native spacing, source epoch and uncertain real-world location. Outside coverage and in mixed unresolved cells, no category is inferred.
-- The geoid readout is independent; h=0 corresponds to EGM2008 height −N, not generally zero.
+- Geometry, collision and Earth range consistently use the selected f64 model: smooth WGS84 or downloaded source-post terrain with explicit h=0 fallback. Neither is exact present-day topography or physical sea level.
+- WBM classes and reconstructed borders retain finite native spacing, source epoch and uncertain real-world location. Missing native coverage uses explicitly coarse global cartographic context; unresolved mixed regional cells remain unknown. No category is inferred from terrain height or a missing DEM.
+- The geoid readout is independent; h=0 corresponds to EGM2008 height −N, not generally zero. Downloaded source EGM2008 heights are converted by h=H+N.
 - Materials and grass are decorative. Display chords, shadows, rasterization and finite precision do not add measured source detail.
 - Optional [weather-informed refraction](refraction.md) traces curved rays through an explicitly transplanted NOAA forecast column. Curved path, phase optical path and chord are distinct; neither forecast resolution nor solver tolerances guarantees a real mirage. Tides, seabed, plate motion and datum epoch transformations remain absent.
 - “100% physical accuracy” and unlimited telescope resolution cannot be guaranteed. Active and historical checks are distinguished in [verification.md](verification.md).

@@ -1,0 +1,64 @@
+{
+  "schema": "performance-host-identifier-migration-v1",
+  "prepared_only": true,
+  "replacement_display_identifier": "olebleubeard",
+  "total_replacements": 24,
+  "scope": "Only recorded Windows counter-path machine-name prefixes are sanitized. All other bytes, numeric measurements, process/engine identifiers and results are unchanged. No measurement was recollected; the replacement is not a statement of the actual host name during the run.",
+  "installation": "Prepared-copy verification only; compare installed bytes with sanitized_sha256 to verify installation.",
+  "records": [
+    {
+      "path": "artifacts/performance/rockies-pdh-before.gpu.json",
+      "original_sha256": "6c534e0259ec7180c095eda97f8e6e220abbb9b883dea43c0e27c56134fedec0",
+      "sanitized_sha256": "489608b68c83e33f088ec6ee91a27125aa101c4fe136f0d690141b31fac1121a",
+      "original_bytes": 167250,
+      "sanitized_bytes": 167266,
+      "replacements": 8,
+      "changed_fields": [
+        "discoveredCounterPaths[0] host prefix",
+        "discoveredCounterPaths[1] host prefix",
+        "discoveredCounterPaths[2] host prefix",
+        "discoveredCounterPaths[3] host prefix",
+        "discoveredCounterPaths[4] host prefix",
+        "discoveredCounterPaths[5] host prefix",
+        "discoveredCounterPaths[6] host prefix",
+        "discoveredCounterPaths[7] host prefix"
+      ]
+    },
+    {
+      "path": "artifacts/performance/rockies-pdh-after.gpu.json",
+      "original_sha256": "b9def945c84d9891e9d5600433602e39d883ad7ddeb5fe741520dab4946ea417",
+      "sanitized_sha256": "317bdfdfcd91afba58758a928a11bc363509cc954a7c5484357423befd210049",
+      "original_bytes": 180787,
+      "sanitized_bytes": 180803,
+      "replacements": 8,
+      "changed_fields": [
+        "discoveredCounterPaths[0] host prefix",
+        "discoveredCounterPaths[1] host prefix",
+        "discoveredCounterPaths[2] host prefix",
+        "discoveredCounterPaths[3] host prefix",
+        "discoveredCounterPaths[4] host prefix",
+        "discoveredCounterPaths[5] host prefix",
+        "discoveredCounterPaths[6] host prefix",
+        "discoveredCounterPaths[7] host prefix"
+      ]
+    },
+    {
+      "path": "artifacts/performance/rockies-default-limit.gpu.json",
+      "original_sha256": "71bffc7e0ec2921b33c74624a4be81e7638510e88864c6f0c79abe9ce6ecf4f1",
+      "sanitized_sha256": "61ae8e1592cb672c463b5e27b4e4fa187eb5f954596895a3d450f8a45243bbdf",
+      "original_bytes": 176914,
+      "sanitized_bytes": 176930,
+      "replacements": 8,
+      "changed_fields": [
+        "discoveredCounterPaths[0] host prefix",
+        "discoveredCounterPaths[1] host prefix",
+        "discoveredCounterPaths[2] host prefix",
+        "discoveredCounterPaths[3] host prefix",
+        "discoveredCounterPaths[4] host prefix",
+        "discoveredCounterPaths[5] host prefix",
+        "discoveredCounterPaths[6] host prefix",
+        "discoveredCounterPaths[7] host prefix"
+      ]
+    }
+  ]
+}

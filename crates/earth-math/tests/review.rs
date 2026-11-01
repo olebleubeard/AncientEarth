@@ -150,7 +150,9 @@ fn geodetic_round_trips_include_negative_heights_poles_and_domain_edges() {
         90.0,
     ] {
         for lon in [-180.0, -123.456789, 0.0, 123.456789, 180.0] {
-            for h in [MIN_HEIGHT_M, -430.0, 0.0, 1.72, 35_786_000.0, MAX_HEIGHT_M] {
+            // Retain the original sub-micrometre check at its original range;
+            // continuous_flight_review uses independent references at four AU.
+            for h in [MIN_HEIGHT_M, -430.0, 0.0, 1.72, 35_786_000.0, 1e9] {
                 let original = geo(lat, lon, h);
                 let position = geodetic_to_ecef(original);
                 let inverse = ecef_to_geodetic(position).unwrap();

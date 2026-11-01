@@ -1,0 +1,13 @@
+# Union with optical_cartesian_suffix_inputs.txt and common scene inventory.
+scripts/optical_cartesian_suffix_trace_fixture.rs
+artifacts/optical-cartesian-suffix-selected-first.json
+artifacts/optical-cartesian-suffix-selected-first-readback.bin
+artifacts/optical-cartesian-suffix-selected-first-states.bin
+artifacts/optical-cartesian-suffix-selected-first-progress.bin
+artifacts/optical-cartesian-suffix-selected-first-prefix.wgsl
+artifacts/optical-cartesian-suffix-selected-first-suffix.wgsl
+artifacts/optical-cartesian-suffix-selected-first-fallback.wgsl
+artifacts/optical-cartesian-suffix-selected-first-runtime-review.json
+artifacts/optical-cartesian-suffix-selected-first-independent-review.json
+artifacts/optical-cartesian-suffix-selected-first-source-archive.json
+artifacts/optical-cartesian-suffix-selected-first-source.zip

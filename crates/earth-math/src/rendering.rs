@@ -8,6 +8,16 @@ use crate::{
     WGS84_B_M, WGS84_E2, ecef_to_geodetic, geodetic_to_ecef,
 };
 use std::collections::{BTreeMap, HashMap};
+mod chunks;
+pub mod continuous;
+pub mod fisheye;
+pub mod layout;
+pub mod lunar;
+pub mod orbit;
+mod reference_edges;
+pub mod stars;
+pub mod survey;
+pub use chunks::{DRAW_CHUNK_TRIANGLES, display_bounds, spatial_draw_chunks};
 
 #[derive(Clone, Copy, Debug)]
 pub struct LocalFrame {
@@ -269,13 +279,20 @@ pub fn terrain_water_mesh(
 /// reference and regional perimeter subdivisions. Legacy terrain openings only
 /// approximate their Cartesian triangle footprints.
 pub fn reference_mesh(scene: &TerrainScene, local: LocalFrame, focal: f64) -> RenderMesh {
-    reference_mesh_impl(scene, local, focal, None)
+    reference_mesh_impl(
+        scene,
+        local,
+        focal,
+        continuous::ReferenceDetail::near(local.origin),
+        None,
+    )
 }
 
 fn reference_mesh_impl(
     scene: &TerrainScene,
     local: LocalFrame,
     focal: f64,
+    detail: continuous::ReferenceDetail,
     mut regional_edges: Option<&mut [Vec<Geodetic>]>,
 ) -> RenderMesh {
     let mut latitudes: Vec<f64> = (-9..=9).map(|i| i as f64 * 10.0).collect();
@@ -299,7 +316,7 @@ fn reference_mesh_impl(
             }
             refine_cell(
                 [lon[0], lat[0], lon[1], lat[1]],
-                local.origin,
+                detail,
                 focal,
                 0,
                 &mut cells,
@@ -372,33 +389,29 @@ fn reference_mesh_impl(
         let north_posts = &horizontal[&float_key(north)];
         let west_posts = &vertical[&float_key(west)];
         boundary.extend(
-            south_posts
+            reference_edges::posts_in_interval(south_posts, west, east, true)
                 .iter()
                 .copied()
-                .filter(|x| *x >= west && *x < east)
                 .map(|x| (south, x)),
         );
         boundary.extend(
-            east_posts
+            reference_edges::posts_in_interval(east_posts, south, north, true)
                 .iter()
                 .copied()
-                .filter(|y| *y >= south && *y < north)
                 .map(|y| (y, east)),
         );
         boundary.extend(
-            north_posts
+            reference_edges::posts_in_interval(north_posts, west, east, false)
                 .iter()
                 .rev()
                 .copied()
-                .filter(|x| *x > west && *x <= east)
                 .map(|x| (north, x)),
         );
         boundary.extend(
-            west_posts
+            reference_edges::posts_in_interval(west_posts, south, north, false)
                 .iter()
                 .rev()
                 .copied()
-                .filter(|y| *y > south && *y <= north)
                 .map(|y| (y, west)),
         );
         let edge: Vec<u32> = boundary
@@ -429,7 +442,13 @@ fn reference_vertex(mesh: &mut RenderMesh, local: LocalFrame, position: Geodetic
     )
 }
 
-fn refine_cell(bounds: [f64; 4], eye: Vec3d, focal: f64, depth: usize, cells: &mut Vec<[f64; 4]>) {
+fn refine_cell(
+    bounds: [f64; 4],
+    detail: continuous::ReferenceDetail,
+    focal: f64,
+    depth: usize,
+    cells: &mut Vec<[f64; 4]>,
+) {
     let [west, south, east, north] = bounds;
     let center =
         geodetic_to_ecef(Geodetic::new((south + north) * 0.5, (west + east) * 0.5, 0.0).unwrap());
@@ -440,7 +459,7 @@ fn refine_cell(bounds: [f64; 4], eye: Vec3d, focal: f64, depth: usize, cells: &m
     let angle = angular_width + angular_height;
     let maximum_curvature_radius = WGS84_A_M * WGS84_A_M / WGS84_B_M;
     let radius = maximum_curvature_radius * angle * 0.5;
-    let distance = (eye.distance(center) - radius).max(0.05);
+    let distance = detail.cell_distance(center, radius);
     let relative_derivative_bound = 1.5 * WGS84_E2 / (1.0 - WGS84_E2);
     let hessian_bound = maximum_curvature_radius * (1.0 + relative_derivative_bound.powi(2)).sqrt();
     let chord_error = hessian_bound * angle * angle * 0.125;
@@ -453,7 +472,7 @@ fn refine_cell(bounds: [f64; 4], eye: Vec3d, focal: f64, depth: usize, cells: &m
             [west, mid_lat, mid_lon, north],
             [mid_lon, mid_lat, east, north],
         ] {
-            refine_cell(child, eye, focal, depth + 1, cells);
+            refine_cell(child, detail, focal, depth + 1, cells);
         }
     } else {
         cells.push(bounds);
@@ -464,3 +483,44 @@ mod grass;
 pub use grass::*;
 mod boundaries;
 pub use boundaries::*;
+
+/// Imported DSM presentation retains every accepted canonical source post. The
+/// importer already bounds the total lattice; no second sampling discards peaks
+/// or creates mismatched neighboring LOD edges. The global h=0 fallback remains
+/// adaptively tessellated outside the finite imported coverage rectangles.
+pub fn imported_scene_meshes(
+    scene: &TerrainScene,
+    local: LocalFrame,
+    focal: f64,
+) -> (RenderMesh, RenderMesh) {
+    imported_scene_meshes_with_detail(
+        scene,
+        local,
+        focal,
+        continuous::ReferenceDetail::near(local.origin),
+    )
+}
+
+/// Same canonical DSM faces, with a separately specified reference-ellipsoid LOD eye.
+pub fn imported_scene_meshes_with_detail(
+    scene: &TerrainScene,
+    local: LocalFrame,
+    focal: f64,
+    detail: continuous::ReferenceDetail,
+) -> (RenderMesh, RenderMesh) {
+    let mut terrain = RenderMesh::default();
+    for patch in scene.patches() {
+        let (mesh, _) = terrain_mesh(patch, local, f64::MAX);
+        let offset = terrain.positions.len() as u32;
+        terrain.positions.extend(mesh.positions);
+        terrain.normals.extend(mesh.normals);
+        terrain.colors.extend(mesh.colors);
+        terrain
+            .indices
+            .extend(mesh.indices.into_iter().map(|i| i + offset));
+    }
+    (
+        reference_mesh_impl(scene, local, focal, detail, None),
+        terrain,
+    )
+}

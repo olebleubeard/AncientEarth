@@ -1,0 +1,42 @@
+{
+  "source_page": "https://svs.gsfc.nasa.gov/4720/",
+  "credit": "NASA's Scientific Visualization Studio",
+  "sources": [
+    {
+      "file": "lroc_color_poles_8k.tif",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_8k.tif",
+      "sha256": "4af8b0cd4d50c30851359d98e7e72040240dd8d03256b58b345b5b76e9edb4ef"
+    },
+    {
+      "file": "ldem_16_uint.tif",
+      "url": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_16_uint.tif",
+      "sha256": "45a2b32d56e81ed30db07fead8abc842b249b6511219d9ca2c53f81bc2dc5d62"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "assets/lunar/color.ael",
+      "sha256": "12e8065af6587222e6933faae21ee3dc8f745786e450a47c08d114c3f36a7917",
+      "width": 8192,
+      "height": 4096,
+      "mip_levels": 14,
+      "srgb": true
+    },
+    {
+      "path": "assets/lunar/normal.ael",
+      "sha256": "21f398102477c4786c532c0cd84ea7933b4cc02d22d0823dcafdf4321d174565",
+      "width": 5760,
+      "height": 2880,
+      "mip_levels": 13,
+      "srgb": false
+    }
+  ],
+  "registration": "Full globe; east-positive longitude -180 to +180 left to right; planetocentric latitude +90 to -90 top to bottom; pixel centers (column+.5)/width,(row+.5)/height; cartographic ME source approximated by existing IAU_MOON text-PCK attitude.",
+  "color_modification": "Unchanged 2019 NASA RGB level zero, treated as sRGB display color. Lower mip levels are box averages in linear RGB then re-encoded sRGB. NASA already adjusted exposure/white balance, inpainted dropouts and filled polar latitudes from LDAM; not calibrated radiometry.",
+  "normal_modification": "Decode h=0.5*DN-10000 metres relative to1737400m sphere. Centered periodic angular derivatives and reflected half-turn polar continuation. Tangent-space outward normal (-h_lambda/((R+h)cos(phi)),-h_phi/(R+h),1), normalized, no exaggeration. Lower mips box-average vectors and renormalize; RGBA8 linear encoding. Shading only; no displacement, lunar silhouette/ranges remain mean sphere.",
+  "height_min_max_m": [
+    -8981.5,
+    10685.5
+  ],
+  "runtime_format": "gzip with mtime0; AELUNAR1, little-endian u32 width,height,mips,sRGB, complete row-major RGBA8 mip chain largest first"
+}

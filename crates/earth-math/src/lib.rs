@@ -1,8 +1,8 @@
 //! WGS84 reference-ellipsoid geometry, in metres and double precision.
 //!
 //! Includes height-free regional categories, native EGM2008 readouts, and
-//! optional weather-informed curved optics with explicit profile assumptions.
-//! Archived terrain APIs remain for tests. Tides and survey accuracy are absent.
+//! optional source-height terrain, and weather-informed curved optics with
+//! explicit profile assumptions. Tides and survey accuracy are absent.
 //! See `docs/science/model.md` for conventions, sources and numerical limits.
 
 use std::f64::consts::PI;
@@ -15,8 +15,12 @@ mod geodesic;
 mod geoid;
 pub use geodesic::wgs84_surface_distance;
 pub mod guides;
+pub mod navigation;
 pub mod rendering;
+pub mod survey;
 mod terrain;
+pub mod topography;
+pub mod water_mask;
 pub use geoid::{GeoidError, GeoidGrid, VerticalReport};
 pub use terrain::{
     PatchTextureView, SkylineMeasurement, SkylineMethod, SurfaceHit, SurfaceKind, TerrainError,
@@ -29,6 +33,7 @@ pub const WGS84_F: f64 = 1.0 / WGS84_INVERSE_FLATTENING;
 pub const WGS84_B_M: f64 = WGS84_A_M * (1.0 - WGS84_F);
 pub const WGS84_E2: f64 = WGS84_F * (2.0 - WGS84_F);
 pub const METRES_PER_FOOT: f64 = 0.3048;
+pub const METRES_PER_INCH: f64 = 0.0254;
 pub const METRES_PER_MILE: f64 = 1_609.344;
 pub const STATURE_M: f64 = 6.0 * METRES_PER_FOOT;
 /// An explicit configurable assumption, not a deduction from six-foot stature.
@@ -36,11 +41,28 @@ pub const DEFAULT_EYE_HEIGHT_M: f64 = 1.72;
 /// Configurable crouching pose assumption, independent of six-foot stature.
 pub const DEFAULT_CROUCH_EYE_HEIGHT_M: f64 = 1.0;
 pub const MIN_HEIGHT_M: f64 = -10_000.0;
-pub const MAX_HEIGHT_M: f64 = 1_000_000_000.0;
+/// IAU 2012 exact astronomical unit, in metres.
+pub const ASTRONOMICAL_UNIT_M: f64 = 149_597_870_700.0;
+/// Finite kinematic inspection domain, not a physical orbit model.
+pub const MAX_HEIGHT_M: f64 = 4.0 * ASTRONOMICAL_UNIT_M;
 pub const MIN_FOV_DEG: f64 = 0.000_001;
 pub const DEFAULT_FOV_DEG: f64 = 60.0;
 pub const MIN_SPEED_MPS: f64 = 0.05;
-pub const MAX_SPEED_MPS: f64 = 50_000_000.0;
+/// Camera inspection speed; it is not used as a relativistic velocity.
+pub const MAX_SPEED_MPS: f64 = 100_000_000_000.0;
+
+/// Conservative floating-point coordinate allowance, not source uncertainty.
+/// Near Earth retain 10 micrometres; at four AU allow about 2.13 millimetres.
+pub fn position_roundoff_m(position: Vec3d) -> f64 {
+    (16.0 * f64::EPSILON * position.length()).max(0.000_01)
+}
+
+pub(crate) fn supported_astronomy_position(position: Vec3d) -> bool {
+    let length = position.length();
+    position.is_finite()
+        && length.is_finite()
+        && length <= MAX_HEIGHT_M + WGS84_A_M + position_roundoff_m(position)
+}
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Vec3d {
@@ -128,8 +150,8 @@ impl fmt::Display for GeometryError {
             Self::InvalidDirection => "The target must define a finite nonzero direction from the eyes.",
             Self::Latitude => "Latitude must be between -90 and 90 degrees.",
             Self::Longitude => "Longitude must be between -180 and 180 degrees.",
-            Self::Height => "Ellipsoidal height must be between -10,000 and 1,000,000,000 metres.",
-            Self::ObserverHeight => "Feet height must be nonnegative and leave room for the eye height below the 1,000,000,000 metre limit.",
+            Self::Height => "Ellipsoidal height must be between -10,000 metres and four astronomical units (598,391,482,800 metres).",
+            Self::ObserverHeight => "Feet height must leave room for the reserved eye height within the four-AU coordinate limit.",
             Self::UnsupportedInterior => "Position is inside the unsupported deep Earth interior.",
             Self::GeodesicSolution => "The reference-ellipsoid geodesic did not return a finite nonnegative distance.",
         })
@@ -184,7 +206,8 @@ pub fn geodetic_to_ecef(g: Geodetic) -> Vec3d {
 /// Inverse for the documented near-surface/exterior domain, not the ellipsoid evolute.
 pub fn ecef_to_geodetic(p: Vec3d) -> Result<Geodetic, GeometryError> {
     let g = inverse_near_surface(p)?;
-    if !(MIN_HEIGHT_M - 0.000_01..=MAX_HEIGHT_M + 0.000_01).contains(&g.height_m) {
+    let allowance = position_roundoff_m(p);
+    if !(MIN_HEIGHT_M - allowance..=MAX_HEIGHT_M + allowance).contains(&g.height_m) {
         return Err(GeometryError::Height);
     }
     Geodetic::new(
@@ -575,6 +598,50 @@ impl UnitSystem {
             Self::Imperial => format!("{:.3} ft", metres / METRES_PER_FOOT),
         }
     }
+    /// Heights keep metres/feet as the primary unit at every magnitude, with
+    /// kilometres/miles as a secondary reference. Digits are formatting, not
+    /// a statement of physical measurement accuracy.
+    pub fn format_height(self, metres: f64) -> String {
+        if !metres.is_finite() || !self.length_from_metres(metres).is_finite() {
+            return "Unavailable".to_owned();
+        }
+        match self {
+            Self::Metric => format!("{metres:.3} m ({:.6} km)", metres / 1000.0),
+            Self::Imperial => format!(
+                "{:.3} ft ({:.6} mi)",
+                metres / METRES_PER_FOOT,
+                metres / METRES_PER_MILE
+            ),
+        }
+    }
+    /// Right-pane height notation: Imperial rounds the combined magnitude to
+    /// the nearest whole inch (half away from zero), then splits it into feet
+    /// and inches. The leading sign applies to both components. Rounded zero
+    /// has no primary minus sign; the parenthetical miles retain the original
+    /// signed value. Metric uses the existing metre/kilometre formatter.
+    /// Whole-inch formatting is unavailable beyond f64's exact integer range.
+    /// Display rounding does not change physical state or express uncertainty.
+    pub fn format_height_feet_inches(self, metres: f64) -> String {
+        if self == Self::Metric {
+            return self.format_height(metres);
+        }
+        let rounded_inches = (metres.abs() / METRES_PER_INCH).round();
+        if !rounded_inches.is_finite() || rounded_inches > 9_007_199_254_740_992.0 {
+            return "Unavailable".to_owned();
+        }
+        let inches = rounded_inches as u64;
+        let sign = if metres < 0.0 && inches != 0 { "-" } else { "" };
+        let miles = if metres == 0.0 {
+            0.0
+        } else {
+            metres / METRES_PER_MILE
+        };
+        format!(
+            "{sign}{} ft {} in ({miles:.6} mi)",
+            inches / 12,
+            inches % 12
+        )
+    }
     /// Unscaled numerical readout rounded to six decimal places. The displayed
     /// decimal places express formatting, not physical accuracy or uncertainty.
     pub fn format_precise_distance(self, metres: f64) -> String {
@@ -838,9 +905,49 @@ impl Observer {
         Ok(())
     }
     pub fn ground(&mut self) {
-        self.feet.height_m = 0.0;
+        let mut candidate = *self;
+        candidate.feet.height_m = 0.0;
+        if candidate.level_upright().is_ok() {
+            candidate.speed_mps = 10.0;
+            *self = candidate;
+        }
+    }
+    /// Restore local geodetic upright/level orientation. A vertical sight has
+    /// no horizontal azimuth, so retain its stored heading convention.
+    pub(crate) fn level_upright(&mut self) -> Result<(), GeometryError> {
+        let forward = self.frame().forward;
+        let enu = EnuBasis::at(self.feet);
+        let east = forward.dot(enu.east);
+        let north = forward.dot(enu.north);
+        if !forward.is_finite() || !self.heading_deg.is_finite() {
+            return Err(GeometryError::InvalidDirection);
+        }
+        self.heading_deg = if east.hypot(north) > 64.0 * f64::EPSILON {
+            east.atan2(north).to_degrees().rem_euclid(360.0)
+        } else {
+            self.heading_deg.rem_euclid(360.0)
+        };
         self.pitch_deg = 0.0;
-        self.speed_mps = 10.0;
+        self.roll_deg = 0.0;
+        Ok(())
+    }
+    /// Roll the camera/body triad about its current forward axis. Positive
+    /// input leans body-up toward camera-right; position and lens are unchanged.
+    pub fn apply_body_roll(&mut self, roll_right: f64, elapsed_seconds: f64) {
+        if !roll_right.is_finite()
+            || !elapsed_seconds.is_finite()
+            || elapsed_seconds <= 0.0
+            || roll_right == 0.0
+        {
+            return;
+        }
+        let radians = (roll_right.clamp(-1.0, 1.0)
+            * navigation::BODY_ROLL_DEG_PER_SECOND
+            * elapsed_seconds.min(0.25))
+        .to_radians();
+        let frame = self.frame();
+        let up = navigation::rotate_axis(frame.up, frame.forward, radians);
+        let _ = self.set_view_axes(frame.forward, up);
     }
     /// Overview is a nonphysical teleport, not an orbital mechanics simulation.
     pub fn overview(&mut self) {
@@ -855,6 +962,23 @@ impl Observer {
         let sensitivity = 0.12 * lens.vertical_fov_deg / DEFAULT_FOV_DEG;
         self.heading_deg = (self.heading_deg + mouse_dx * sensitivity).rem_euclid(360.0);
         self.pitch_deg = (self.pitch_deg - mouse_dy * sensitivity).clamp(-90.0, 90.0);
+    }
+    /// Full-pose camera-axis look, including passage through zenith/nadir.
+    /// The Euler fields are only storage coordinates; no pitch clamp is used.
+    pub fn apply_free_look(&mut self, mouse_dx: f64, mouse_dy: f64, lens: Lens) {
+        if !mouse_dx.is_finite() || !mouse_dy.is_finite() {
+            return;
+        }
+        let sensitivity = (0.12 * lens.vertical_fov_deg / DEFAULT_FOV_DEG).to_radians();
+        let frame = self.frame();
+        let yaw = (-mouse_dx * sensitivity).rem_euclid(std::f64::consts::TAU);
+        let forward = navigation::rotate_axis(frame.forward, frame.up, yaw);
+        let right = navigation::rotate_axis(frame.right, frame.up, yaw);
+        let pitch = (-mouse_dy * sensitivity).rem_euclid(std::f64::consts::TAU);
+        let _ = self.set_view_axes(
+            navigation::rotate_axis(forward, right, pitch),
+            navigation::rotate_axis(frame.up, right, pitch),
+        );
     }
     /// Input axes in [-1,1]: forward, right, geodetic up. Combined speed is
     /// normalized, including diagonals. Straight ECEF flight with surface stop.

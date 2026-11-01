@@ -8,6 +8,8 @@ fn unsafe_calendar_change_restores_accepted_pose_epoch_and_display_then_relocks(
     let scene = TerrainScene::new(vec![]);
     let mut explorer = Explorer {
         observer: Observer::new(Geodetic::new(45.0, 12.0, 10.0).unwrap()),
+        // This fixture exercises the unrestricted inertial-frame contract.
+        horizon_lock_enabled: false,
         ..Explorer::default()
     };
     explorer.observer.roll_deg = 37.0;

@@ -1,7 +1,7 @@
 {
   "target": "x86_64-pc-windows-msvc",
   "toolchain": "rustc 1.97.1 (8bab26f4f 2026-07-14)",
-  "cargo_lock_sha256": "f1ef16e9d791e1a9174df5f97b3a1a218489eb07e79eefbc6136bd555dd8364f",
+  "cargo_lock_sha256": "0194487bc485022c02831459e69467812fb5af8c857eea4eaa151a89bf5179ac",
   "scope": "Resolved Windows default-feature dependency graph, including build dependencies; not a license audit of other binary targets.",
   "packages": [
     {
@@ -3096,6 +3096,17 @@
       ]
     },
     {
+      "name": "quick-error",
+      "version": "2.0.1",
+      "declared_license": "MIT/Apache-2.0",
+      "selected_license": "MIT",
+      "repository": "http://github.com/tailhook/quick-error",
+      "license_texts": [
+        "a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae",
+        "058f01fe181608d027fcde7e528fc03ea3cf90f30903c407644b0a9bbc54f500"
+      ]
+    },
+    {
       "name": "quote",
       "version": "1.0.47",
       "declared_license": "MIT OR Apache-2.0",
@@ -3715,6 +3726,17 @@
       "license_texts": [
         "143368af9701a24ebaf89fe5310ad8116ca71e8e99f17415c0dd893f6a256ae4",
         "c9a75f18b9ab2927829a208fc6aa2cf4e63b8420887ba29cdb265d6619ae82d5"
+      ]
+    },
+    {
+      "name": "tiff",
+      "version": "0.11.3",
+      "declared_license": "MIT",
+      "selected_license": "MIT",
+      "repository": "https://github.com/image-rs/image-tiff",
+      "license_texts": [
+        "20c097d0de27e2adc179140a3d542091951a030699c7e1c78655f2a2d08d4e3e",
+        "c6d1d56bb6e2fe4f0aed4aa8553261dd65247db6db50c87c9e9f3fbe095e2202"
       ]
     },
     {

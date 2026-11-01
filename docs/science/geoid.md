@@ -1,6 +1,6 @@
 # Sea-level reference and vertical measurements
 
-The current surface is WGS84 h=0 everywhere. EGM2008 is retained only as an independent HUD datum readout: surface height above this reference is −N. It does not displace land/water or enter boundary preparation.
+In smooth mode the surface is WGS84 h=0 everywhere, so its height above EGM2008 is −N. EGM2008 does not displace that surface or enter boundary preparation. Optional [downloaded terrain](topography.md) uses the same native geoid to convert source EGM2008 heights by h=H+N; the vertical HUD then queries the selected physical mesh.
 
 AncientEarth reports the **EGM2008 geoid beneath the observer**, evaluated at the observer's current geodetic latitude and longitude. This is a modeled sea-level reference, including over land. It is not the instantaneous ocean surface, a tide prediction, a surveyed local vertical datum, or an exact measurement of physical sea level.
 

@@ -1,6 +1,7 @@
 //! Observer-relative f32 presentation coefficients for the f64 optical model.
 //! Numerical presentation has finite precision; measurements use the CPU solver.
 use crate::{Observer, Vec3d, WGS84_A_M, WGS84_B_M, geodetic_to_ecef, rendering::LocalFrame};
+pub mod scene;
 
 /// Operational eye-height limit for the current observer-relative optical pass.
 /// This is a presentation policy, not the physical extent of the atmosphere.
@@ -12,7 +13,7 @@ pub const MAX_GPU_EYE_HEIGHT_M: f64 = 20_000.0;
 /// can still be unresolved; this does not guarantee convergence of every ray.
 pub fn display_supported(observer: Observer) -> bool {
     let height = observer.eye_geodetic().height_m;
-    height.is_finite() && (0.0..=MAX_GPU_EYE_HEIGHT_M).contains(&height)
+    height.is_finite() && (crate::MIN_HEIGHT_M..=MAX_GPU_EYE_HEIGHT_M).contains(&height)
 }
 
 #[derive(Clone, Copy, Debug)]

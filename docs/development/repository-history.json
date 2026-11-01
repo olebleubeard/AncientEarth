@@ -1,0 +1,72 @@
+{
+  "repository": "olebleubeard/AncientEarth",
+  "replacement_type": "Independent repository, not a fork or transfer",
+  "original_history_commit_count": 3,
+  "original_commit_mapping": {
+    "3e5f0ed572c5b423b7c7fb9298e3787e40ed13d1": "d9906d1e694226cf6f69dea1533f44e7f6e4043b",
+    "7c7c964cfc9018f6b78a47344f53fa2308ad19a6": "72cde250be4baa95c1cafe409e0013f8f635e396",
+    "cbcdbc69507b83fa97067c2f36a0982e251d8f2b": "88d5959dc179fa69967a1c3923b64485db441eb4"
+  },
+  "preserved_original_commit_dates_timezones_and_parent_order": true,
+  "rewritten_user_identity": {
+    "name": "oleBlueBeard",
+    "email": "351222601+olebleubeard@users.noreply.github.com"
+  },
+  "other_author_and_committer_identities_preserved": true,
+  "removed_invalidated_commit_signatures": [
+    "3e5f0ed572c5b423b7c7fb9298e3787e40ed13d1",
+    "cbcdbc69507b83fa97067c2f36a0982e251d8f2b"
+  ],
+  "original_branches": [
+    "refs/heads/codex/earth-observatory-weather",
+    "refs/heads/codex/horizon-performance-stars",
+    "refs/heads/main"
+  ],
+  "original_tags": [],
+  "preexisting_worktree_entries_preserved": 860,
+  "attribution_only_worktree_edits": [
+    "Cargo.toml",
+    "licenses/assets.json",
+    "src/weather/transport.rs"
+  ],
+  "github_only": {
+    "forks": 0,
+    "releases": 0,
+    "pull_requests": [
+      {
+        "number": "1",
+        "title": "Build the WGS84 observatory with reviewed astronomy and optional weather optics",
+        "body": "Builds the native Ancient Earth observatory from the repository's initial README: Rust, Bevy and Dear ImGui with a smooth WGS84 land/water surface, GPS navigation, first-person flight, astronomy and eclipse modeling, procedural ground/grass and optional NOAA weather-informed refraction.\n\nWeather has an explicit enable/disable toggle. F2 clean view retains independent L/V guide controls. The README includes three fresh screenshots taken from the running application before this push: ground and grass, weather controls, and clean-view guides. Licensed source data, attribution, provenance and independent mathematical verification are included.\n\nValidation: 176 Rust tests passed, with independent mathematics review; formatting and strict Clippy passed. The updated asset audit passes for 74 reviewed assets, and Windows dependency/font notices pass verification. Git preserves byte-sensitive data and notices; build outputs and live weather caches are excluded.\n\nCurrent limits remain explicit: finite regional boundary coverage and forecast resolution, optical display support through 20 km eye height, simplified optical-mode lighting without decorative grass, and substantial refraction performance cost. The documented stationary 1080p DX12 debug capture on the RX 7900 XTX measured 12.7 FPS. This does not claim exact local mirages or AAA frame-rate performance.\n",
+        "created_at": "2026-10-21T22:42:04Z",
+        "closed_at": "2026-10-21T23:29:44Z",
+        "merged_at": "2026-10-21T23:29:44Z"
+      }
+    ],
+    "actions_runs": [
+      {
+        "name": "Validate",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-21T23:29:46Z",
+        "updated_at": "2026-10-22T00:16:41Z"
+      },
+      {
+        "name": "Validate",
+        "event": "pull_request",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-21T22:42:11Z",
+        "updated_at": "2026-10-21T23:29:23Z"
+      },
+      {
+        "name": "Validate",
+        "event": "push",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-10-21T22:41:56Z",
+        "updated_at": "2026-10-21T23:15:29Z"
+      }
+    ]
+  }
+}

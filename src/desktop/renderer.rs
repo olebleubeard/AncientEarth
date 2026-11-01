@@ -1,6 +1,19 @@
 //! Native GPU presentation. Measurements use the canonical f64 surface.
+mod classification;
+mod lunar;
 mod materials;
+#[cfg(test)]
+mod orbit;
+pub use classification::inspection_observer as classification_inspection_observer;
+pub use classification::rockies_cost_observer;
+mod preparation;
 mod refraction;
+pub use refraction::DisplayStatus as OpticalDisplayStatus;
+pub(crate) use refraction::OpticalReadback;
+mod survey;
+mod terrain;
+#[cfg(test)]
+mod visibility_review;
 use super::Explorer;
 use ancient_earth::{simulation::AstronomicalScene, surface::WorldSurface};
 use bevy::tasks::{AsyncComputeTaskPool, Task, block_on, poll_once};
@@ -14,7 +27,10 @@ use bevy::{
     },
     mesh::{Indices, PrimitiveTopology},
     prelude::*,
-    render::render_resource::{AsBindGroup, TextureFormat},
+    render::{
+        render_resource::{AsBindGroup, ShaderType, TextureFormat},
+        storage::ShaderBuffer,
+    },
     shader::ShaderRef,
     sprite_render::{Material2d, Material2dPlugin},
     window::PrimaryWindow,
@@ -24,18 +40,29 @@ use earth_math::{
     Observer, Projection as LensProjection, Vec3d,
     rendering::{
         GrassBlade, GrassPlacementCache, GrassRayBounds, LocalFrame, RenderMesh,
-        boundary_scene_meshes, focal_pixels, grass_intersection_cached, grass_ray_bounds,
-        grass_render_mesh, grass_wind,
+        continuous::{DisplayPlan, ReferenceDetail},
+        focal_pixels, grass_intersection_cached, grass_ray_bounds, grass_render_mesh, grass_wind,
     },
 };
 use materials::{
     EclipseSettings, GrassExtension, GrassMaterial, GrassSettings, GroundExtension, GroundMaterial,
-    GroundSettings, MoonExtension, MoonMaterial, WaterExtension, WaterMaterial, WaterSettings,
+    GroundSettings, MoonExtension, MoonMaterial, SkyExtension, SkyMaterial, StarExtension,
+    StarMaterial, StarSettings, WaterExtension, WaterMaterial, WaterSettings,
 };
 use std::{sync::Arc, time::Instant};
 
 const FISHEYE_SHADER: Handle<Shader> = uuid_handle!("7340542d-ff49-4a7b-902c-c934ec50de87");
 
+#[derive(Clone, Copy, Default, Debug, ShaderType)]
+pub struct FisheyeStars {
+    phase_sin: Vec4,
+    phase_cos: Vec4,
+    vertical: Vec4,
+    right: Vec4,
+    up: Vec4,
+    forward: Vec4,
+    visibility: Vec4,
+}
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone)]
 pub struct FisheyeMaterial {
     #[uniform(0)]
@@ -58,6 +85,12 @@ pub struct FisheyeMaterial {
     #[texture(11)]
     #[sampler(12)]
     down: Handle<Image>,
+    #[uniform(13)]
+    stars: FisheyeStars,
+    #[storage(14, read_only)]
+    catalogue: Handle<ShaderBuffer>,
+    #[uniform(15)]
+    sampling: Vec4,
 }
 impl Material2d for FisheyeMaterial {
     fn fragment_shader() -> ShaderRef {
@@ -65,15 +98,22 @@ impl Material2d for FisheyeMaterial {
     }
 }
 pub fn install(app: &mut App) {
+    lunar::install(app);
     materials::install(app);
     refraction::install(app);
+    terrain::install(app);
+    survey::install(app);
     app.add_plugins(Material2dPlugin::<FisheyeMaterial>::default());
     app.world_mut()
         .resource_mut::<Assets<Shader>>()
         .insert(
             FISHEYE_SHADER.id(),
             Shader::from_wesl(
-                include_str!("shaders/fisheye.wesl"),
+                format!(
+                    "{}\n{}",
+                    include_str!("shaders/fisheye.wesl"),
+                    include_str!("shaders/stars_common.wesl")
+                ),
                 "ancient_earth/fisheye.wesl",
             ),
         )
@@ -87,16 +127,35 @@ pub struct RenderedEarth {
     raster_dimensions: (u32, u32),
     /// CPU presentation preparation, not GPU frame time.
     pub render_ms: u128,
+    cpu_timings: RenderCpuTimings,
     pub triangles: usize,
+    /// Prepared draw chunks and previous Bevy visibility results, not GPU counters.
+    pub draw_chunks: usize,
+    pub view_visible_chunks: usize,
+    pub view_visible_triangles: usize,
     pub lod_levels: [usize; 4],
     pub mode: &'static str,
     pub grass_distance_m: Option<f64>,
     /// Requested decorative field has finished preparation; GPU warmup remains separate.
     pub presentation_ready: bool,
+    pub optical_status: OpticalDisplayStatus,
+    /// Pose and lens submitted with the current optical material update.
+    /// This identifies the main-world frame, not asynchronous GPU completion.
+    pub optical_view: Option<(Observer, earth_math::Lens)>,
+    /// Exact stellar input submitted for this optical frame, when ready.
+    pub optical_stellar_input: Option<f32>,
+    pub optical_submission_path: Option<&'static str>,
+    /// Current requested packet identity; completion is separately audited.
+    pub optical_submission_control: Option<[u32; 4]>,
+    pub optical_stellar_control: Option<[u32; 4]>,
+    mesh_counts: [u64; 5],
+    mesh_job: Option<Task<preparation::Prepared>>,
+    active_scene: Option<Arc<earth_math::TerrainScene>>,
+    /// Worker duration is separate from frame-thread preparation timing.
+    pub mesh_preparation_ms: u128,
     origin: LocalFrame,
-    last_observer: Option<Observer>,
-    last_boundaries: bool,
-    last_fov: f64,
+    display_plan: DisplayPlan,
+    last_detail_focal: f64,
     last_quality: usize,
     reference: Handle<Mesh>,
     patches: Vec<Handle<Mesh>>,
@@ -116,13 +175,61 @@ pub struct RenderedEarth {
     fish_targets: Vec<Handle<Image>>,
     fish_material: Handle<FisheyeMaterial>,
     moon_material: Handle<MoonMaterial>,
-    stars_mesh: Handle<Mesh>,
-    stars_material: Handle<StandardMaterial>,
+    stars_material: Handle<StarMaterial>,
     sky_mesh: Handle<Mesh>,
+    sky_material: Handle<SkyMaterial>,
     last_sky: Option<(f32, f32)>,
     ground_material: Handle<GroundMaterial>,
 }
+/// Main-world timings only. GPU work and driver/pipeline time outside this
+/// system are deliberately not included. Populated for native QA correlation.
+#[derive(Clone, Copy, Default)]
+pub struct RenderCpuTimings {
+    started_unix_us: u128,
+    total_us: u128,
+    mesh_poll_us: u128,
+    mesh_commit_us: u128,
+    mesh_request_us: u128,
+    completed_worker_ms: Option<u128>,
+    worker_on_render_thread: Option<bool>,
+}
+impl RenderCpuTimings {
+    pub fn json(self) -> serde_json::Value {
+        serde_json::json!({
+            "started_unix_us":self.started_unix_us,"total_us":self.total_us,
+            "mesh_poll_us":self.mesh_poll_us,"mesh_commit_us":self.mesh_commit_us,
+            "mesh_request_us":self.mesh_request_us,"completed_worker_ms":self.completed_worker_ms,
+            "worker_on_render_thread":self.worker_on_render_thread,
+        })
+    }
+}
+pub struct ContinuousSnapshot {
+    pub space: bool,
+    pub origin: Vec3d,
+    pub reconstructed_eye: Vec3d,
+    pub mesh_counts: [u64; 5],
+    pub cpu: RenderCpuTimings,
+}
 impl RenderedEarth {
+    /// CPU-side coordinate contract for the opt-in continuous traversal probe.
+    pub fn continuous_qa_snapshot(&self, observer: Observer) -> ContinuousSnapshot {
+        let position = self.origin.position(observer.eye_position());
+        let reconstructed = self.origin.origin
+            + self.origin.basis.east * f64::from(position[0])
+            + self.origin.basis.up * f64::from(position[1])
+            - self.origin.basis.north * f64::from(position[2]);
+        ContinuousSnapshot {
+            space: self.display_plan.space,
+            origin: self.origin.origin,
+            reconstructed_eye: reconstructed,
+            mesh_counts: self.mesh_counts,
+            cpu: self.cpu_timings,
+        }
+    }
+    /// Requested/completed/committed/discarded/in-flight presentation jobs.
+    pub fn mesh_qa_snapshot(&self) -> [u64; 5] {
+        self.mesh_counts
+    }
     /// Read-only state for the opt-in native movement/culling coherence fixture.
     pub fn grass_qa_snapshot(&self) -> (Vec3d, u64, usize, usize) {
         (
@@ -164,6 +271,29 @@ pub enum SceneObject {
 #[derive(Component)]
 pub struct FishQuad;
 
+/// The classifier owns every real surface face when active. The retained
+/// legacy handles then contain only a degenerate placeholder at local origin.
+/// Submitting those placeholders can compile otherwise unused material
+/// pipelines when camera motion brings that origin into the view frustum.
+fn surface_visibility(
+    object: &SceneObject,
+    coherent: bool,
+    classifier: bool,
+    grass_enabled: bool,
+    grass_present: bool,
+) -> Option<Visibility> {
+    let drawn = match object {
+        SceneObject::Reference | SceneObject::Patch | SceneObject::Water => coherent && !classifier,
+        SceneObject::Grass => coherent && grass_enabled && grass_present,
+        _ => return None,
+    };
+    Some(if drawn {
+        Visibility::Visible
+    } else {
+        Visibility::Hidden
+    })
+}
+
 fn blank_mesh() -> Mesh {
     Mesh::new(
         PrimitiveTopology::TriangleList,
@@ -194,11 +324,15 @@ pub fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut ground_materials: ResMut<Assets<GroundMaterial>>,
     mut moon_materials: ResMut<Assets<MoonMaterial>>,
+    mut star_materials: ResMut<Assets<StarMaterial>>,
+    mut sky_materials: ResMut<Assets<SkyMaterial>>,
+    mut buffers: ResMut<Assets<ShaderBuffer>>,
     mut grass_materials: ResMut<Assets<GrassMaterial>>,
     mut water_materials: ResMut<Assets<WaterMaterial>>,
     mut fisheye_materials: ResMut<Assets<FisheyeMaterial>>,
     mut images: ResMut<Assets<Image>>,
     state: Res<Explorer>,
+    lunar_maps: Res<lunar::LunarMaps>,
 ) {
     let origin = LocalFrame::at(state.observer);
     let ground = ground_materials.add(GroundMaterial {
@@ -256,6 +390,7 @@ pub fn setup(
         MeshMaterial3d(ground.clone()),
         SceneObject::Reference,
         NotShadowCaster,
+        Visibility::Hidden,
     ));
     let patches: Vec<_> = (0..4)
         .map(|_| {
@@ -264,6 +399,7 @@ pub fn setup(
                 Mesh3d(mesh.clone()),
                 MeshMaterial3d(ground.clone()),
                 SceneObject::Patch,
+                Visibility::Hidden,
             ));
             mesh
         })
@@ -275,6 +411,7 @@ pub fn setup(
                 Mesh3d(mesh.clone()),
                 MeshMaterial3d(water_material.clone()),
                 SceneObject::Water,
+                Visibility::Hidden,
             ));
             mesh
         })
@@ -288,6 +425,7 @@ pub fn setup(
             SceneObject::Grass,
             bounds,
             bevy::camera::visibility::NoAutoAabb,
+            Visibility::Hidden,
         ))
         .id();
     let sun_material = materials.add(StandardMaterial {
@@ -311,25 +449,32 @@ pub fn setup(
             ..default()
         },
         extension: MoonExtension {
-            illumination: Vec4::Y,
+            settings: lunar::LunarSettings::default(),
+            color: lunar_maps.color.clone(),
+            normal: lunar_maps.normal.clone(),
         },
     });
     commands.spawn((
-        Mesh3d(meshes.add(mesh_from(moon_mesh()))),
+        Mesh3d(meshes.add(mesh_from(earth_math::rendering::lunar::mesh()))),
         MeshMaterial3d(moon_material.clone()),
         SceneObject::Moon,
         NotShadowCaster,
         NotShadowReceiver,
         bevy::camera::visibility::NoFrustumCulling,
     ));
-    let stars_mesh = meshes.add(blank_mesh());
-    let stars_material = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        unlit: true,
-        fog_enabled: false,
-        alpha_mode: AlphaMode::Blend,
-        cull_mode: None,
-        ..default()
+    let stars_mesh = meshes.add(star_mesh());
+    let stars_material = star_materials.add(StarMaterial {
+        base: StandardMaterial {
+            base_color: Color::linear_rgb(0.18, 0.18, 0.18),
+            unlit: true,
+            fog_enabled: false,
+            alpha_mode: AlphaMode::Blend,
+            cull_mode: None,
+            ..default()
+        },
+        extension: StarExtension {
+            settings: StarSettings::default(),
+        },
     });
     commands.spawn((
         Mesh3d(stars_mesh.clone()),
@@ -340,16 +485,19 @@ pub fn setup(
         bevy::camera::visibility::NoFrustumCulling,
     ));
     let sky_mesh = meshes.add(blank_mesh());
-    let sky_material = materials.add(StandardMaterial {
-        base_color: Color::WHITE,
-        unlit: true,
-        fog_enabled: false,
-        cull_mode: None,
-        ..default()
+    let sky_material = sky_materials.add(SkyMaterial {
+        base: StandardMaterial {
+            base_color: Color::WHITE,
+            unlit: true,
+            fog_enabled: false,
+            cull_mode: None,
+            ..default()
+        },
+        extension: SkyExtension { unused: Vec4::ZERO },
     });
     commands.spawn((
         Mesh3d(sky_mesh.clone()),
-        MeshMaterial3d(sky_material),
+        MeshMaterial3d(sky_material.clone()),
         SceneObject::Sky,
         NotShadowCaster,
         NotShadowReceiver,
@@ -435,6 +583,11 @@ pub fn setup(
         left: fish_targets[3].clone(),
         up: fish_targets[4].clone(),
         down: fish_targets[5].clone(),
+        stars: FisheyeStars::default(),
+        catalogue: buffers.add(ShaderBuffer::from(
+            earth_math::rendering::stars::packed_catalogue(),
+        )),
+        sampling: Vec4::new(1.0, 0.0, 0.0, 0.0),
     });
     commands.spawn((
         Camera2d,
@@ -457,15 +610,28 @@ pub fn setup(
         dimensions: (1920, 1080),
         raster_dimensions: (1920, 1080),
         render_ms: 0,
+        cpu_timings: RenderCpuTimings::default(),
         triangles: 0,
+        draw_chunks: 0,
+        view_visible_chunks: 0,
+        view_visible_triangles: 0,
         lod_levels: [1; 4],
         mode: "GPU / 4x MSAA",
         grass_distance_m: None,
         presentation_ready: false,
+        optical_status: OpticalDisplayStatus::Inactive,
+        optical_view: None,
+        optical_stellar_input: None,
+        optical_submission_path: None,
+        optical_submission_control: None,
+        optical_stellar_control: None,
+        mesh_counts: [0; 5],
+        mesh_job: None,
+        active_scene: None,
+        mesh_preparation_ms: 0,
         origin,
-        last_observer: None,
-        last_boundaries: state.boundaries_enabled,
-        last_fov: 0.0,
+        display_plan: DisplayPlan::at(state.observer, false),
+        last_detail_focal: 0.0,
         last_quality: state.quality,
         reference,
         patches,
@@ -485,9 +651,9 @@ pub fn setup(
         fish_targets,
         fish_material,
         moon_material,
-        stars_mesh,
         stars_material,
         sky_mesh,
+        sky_material,
         last_sky: None,
         ground_material: ground,
     });
@@ -499,11 +665,15 @@ pub fn setup(
 pub struct RenderParameters<'w, 's> {
     commands: Commands<'w, 's>,
     refraction: refraction::Parameters<'w, 's>,
+    terrain: terrain::Parameters<'w, 's>,
+    survey: survey::Parameters<'w>,
     framebuffer: ResMut<'w, RenderedEarth>,
     meshes: ResMut<'w, Assets<Mesh>>,
-    materials: ResMut<'w, Assets<StandardMaterial>>,
+    buffers: ResMut<'w, Assets<ShaderBuffer>>,
     ground_materials: ResMut<'w, Assets<GroundMaterial>>,
     moon_materials: ResMut<'w, Assets<MoonMaterial>>,
+    star_materials: ResMut<'w, Assets<StarMaterial>>,
+    sky_materials: ResMut<'w, Assets<SkyMaterial>>,
     grass_materials: ResMut<'w, Assets<GrassMaterial>>,
     water_materials: ResMut<'w, Assets<WaterMaterial>>,
     fish_materials: ResMut<'w, Assets<FisheyeMaterial>>,
@@ -573,34 +743,80 @@ pub fn render(
     surface: Res<WorldSurface>,
     astronomy: Res<AstronomicalScene>,
     weather: Res<ancient_earth::weather::WeatherState>,
+    survey_state: Res<ancient_earth::survey::SurveyState>,
+    pacing: Res<super::frame_pacing::FramePacing>,
     time: Res<Time>,
     windows: Query<&Window, With<PrimaryWindow>>,
     mut params: RenderParameters,
 ) {
-    let Ok(window) = windows.single() else { return };
-    if window.physical_width() == 0 || window.physical_height() == 0 {
-        return;
-    }
+    let window = match windows.single() {
+        Ok(window)
+            if !pacing.window_minimized
+                && window.visible
+                && window.physical_width() > 0
+                && window.physical_height() > 0 =>
+        {
+            window
+        }
+        _ => {
+            params.refraction.suspend();
+            params.framebuffer.optical_view = None;
+            params.framebuffer.optical_stellar_input = None;
+            params.framebuffer.optical_submission_path = None;
+            params.framebuffer.optical_submission_control = None;
+            params.framebuffer.optical_stellar_control = None;
+            params.framebuffer.optical_status = OpticalDisplayStatus::Inactive;
+            params.framebuffer.presentation_ready = false;
+            return;
+        }
+    };
     let started = Instant::now();
+    let _cpu_section = super::cpu_watch::Section::start("renderer");
+    params.framebuffer.cpu_timings = RenderCpuTimings {
+        started_unix_us: std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |elapsed| elapsed.as_micros()),
+        ..Default::default()
+    };
     let dimensions = (window.physical_width(), window.physical_height());
     let lens = state.lens();
     let fisheye = lens.projection == LensProjection::EquidistantFisheye;
+    let fish_projection = earth_math::rendering::fisheye::forward_projection(lens);
     let frame = state.observer.frame();
-    let refracted = weather.view_profile(state.observer).is_some();
+    let source_scene = surface.shared(state.boundaries_enabled);
+    let scene = source_scene.as_ref();
+    let refracted = weather
+        .view_profile_for_scene(state.observer, scene)
+        .is_some();
     let grass_enabled = state.grass_enabled && !refracted;
-    let scene = surface.active(state.boundaries_enabled);
-    params.refraction.update(
-        weather.view_profile(state.observer),
+    let optical_status = params.refraction.update(
+        weather.view_profile_for_scene(state.observer, scene),
         &state,
-        scene,
+        &survey_state,
+        &source_scene,
         &astronomy,
         dimensions,
         Vec2::new(window.width(), window.height()),
         time.elapsed_secs_f64(),
+        time.delta_secs_f64(),
+        &mut params.buffers,
     );
     let cache = &mut params.framebuffer;
+    cache.optical_status = optical_status;
+    cache.optical_view =
+        (cache.optical_status == OpticalDisplayStatus::Ready).then_some((state.observer, lens));
+    cache.optical_stellar_input = params.refraction.stellar_input();
+    cache.optical_submission_path = params.refraction.submission_path();
+    cache.optical_submission_control = params.refraction.submission_control();
+    cache.optical_stellar_control = params.refraction.stellar_control();
+    if let Some(mut material) = params.sky_materials.get_mut(&cache.sky_material) {
+        material.extension.unused.x = if fisheye { 1.0 } else { 0.0 };
+    }
     if refracted {
-        // Curved rays have their own exact h=0 surface lookup. Do not rebuild
+        cache.draw_chunks = 0;
+        cache.view_visible_chunks = 0;
+        cache.view_visible_triangles = 0;
+        // Curved rays have their own canonical surface/prism lookup. Do not rebuild
         // unused raster meshes or decorative fields while flying in this mode.
         // Preserve their coherent caches for the next straight-mode frame.
         for (_, _, mut camera, role, _) in &mut params.cameras {
@@ -610,88 +826,148 @@ pub fn render(
             *visibility = Visibility::Hidden;
         }
         cache.grass_distance_m = None;
-        cache.presentation_ready = true;
+        cache.presentation_ready = cache.optical_status == OpticalDisplayStatus::Ready;
         cache.dimensions = dimensions;
         cache.mode = "Curved optical rays / native pixels / f32 display";
         cache.render_ms = started.elapsed().as_millis();
+        cache.cpu_timings.total_us = started.elapsed().as_micros();
         return;
     }
     let scene_identity = scene as *const earth_math::TerrainScene as usize;
-    let boundaries_changed =
-        cache.last_boundaries != state.boundaries_enabled || cache.scene_identity != scene_identity;
+    let boundaries_changed = cache.scene_identity != scene_identity;
     cache.scene_identity = scene_identity;
     let grass_setting_changed = cache.last_grass_enabled != grass_enabled;
     let grass_quality_changed = cache.last_quality != state.quality;
+    cache.last_quality = state.quality;
     let mut origin_changed = false;
     if boundaries_changed {
         cache.grass_placement.clear();
     }
-    let focal = focal_pixels(
-        if fisheye { 90.0 } else { lens.vertical_fov_deg },
-        dimensions.1,
-    );
-    // Finite tessellation budget; optical FOV itself is unchanged. This limit
-    // prevents extreme telescope zoom from requesting billions of triangles.
+    let focal = if fisheye {
+        fish_projection.focal_pixels(dimensions.1)
+    } else {
+        focal_pixels(lens.vertical_fov_deg, dimensions.1)
+    };
+    // Optical FOV updates every frame. Only finite tessellation preparation is
+    // deferred, retaining the existing geometric bound and 16k focal budget.
     let detail_focal = (focal * [0.5, 1.0, 2.0, 4.0][state.quality.min(3)]).min(16_000.0);
     let rebase_distance = (state.observer.feet.height_m.abs() * 0.02).clamp(80.0, 20_000.0);
-    let rebuild = cache.last_observer.is_none()
-        || frame.origin.distance(cache.origin.origin) > rebase_distance
-        || boundaries_changed
-        || dimensions != cache.raster_dimensions
-        || cache.last_quality != state.quality
-        || (lens.vertical_fov_deg - cache.last_fov).abs() > 0.01;
-    if rebuild {
-        let next_origin = LocalFrame::at(state.observer);
-        origin_changed = next_origin.origin != cache.origin.origin
-            || next_origin.basis.east != cache.origin.basis.east
-            || next_origin.basis.up != cache.origin.basis.up;
-        cache.origin = next_origin;
-        if let Some(mut material) = params.ground_materials.get_mut(&cache.ground_material) {
-            material.extension.settings = GroundSettings::at(cache.origin);
-        }
-        if let Some(mut material) = params.water_materials.get_mut(&cache.water_material) {
-            material.extension.settings = WaterSettings::at(cache.origin);
-        }
-        let presentation = boundary_scene_meshes(scene, cache.origin, detail_focal);
-        cache.triangles = presentation.reference.indices.len() / 3;
-        params
-            .meshes
-            .insert(cache.reference.id(), mesh_from(presentation.reference))
-            .expect("reference mesh retained");
-        let mut regions = presentation.regions.into_iter();
-        for index in 0..cache.patches.len() {
-            if let Some(region) = regions.next() {
-                cache.triangles += (region.land.indices.len() + region.water.indices.len()) / 3;
-                cache.lod_levels[index] = region.stride;
+    let poll_started = Instant::now();
+    let prepared = cache
+        .mesh_job
+        .as_mut()
+        .and_then(|job| block_on(poll_once(job)));
+    cache.cpu_timings.mesh_poll_us = poll_started.elapsed().as_micros();
+    if let Some(prepared) = prepared {
+        let commit_started = Instant::now();
+        let _commit_section = super::cpu_watch::Section::start("renderer.mesh_commit");
+        cache.cpu_timings.completed_worker_ms = Some(prepared.preparation_ms);
+        cache.cpu_timings.worker_on_render_thread =
+            Some(prepared.worker_thread == std::thread::current().id());
+        cache.mesh_job = None;
+        cache.mesh_counts[1] += 1;
+        cache.mesh_counts[4] = 0;
+        if Arc::as_ptr(&prepared.request.scene) as usize == scene_identity {
+            // Accept useful same-scene work even after further view movement.
+            // Every local mesh and its origin changes in this single system;
+            // camera, material, survey and grass updates below use that origin.
+            let next_origin = prepared.request.local;
+            origin_changed = next_origin.origin != cache.origin.origin
+                || next_origin.basis.east != cache.origin.basis.east
+                || next_origin.basis.up != cache.origin.basis.up;
+            cache.origin = next_origin;
+            cache.display_plan = prepared.request.plan;
+            cache.last_detail_focal = prepared.request.focal;
+            cache.active_scene = Some(prepared.request.scene.clone());
+            cache.triangles = prepared.triangles;
+            cache.mesh_preparation_ms = prepared.preparation_ms;
+            params
+                .meshes
+                .insert(cache.reference.id(), prepared.boundary.reference)
+                .expect("reference mesh retained");
+            let mut regions = prepared.boundary.regions.into_iter();
+            for index in 0..cache.patches.len() {
+                let (land, water, stride) = regions
+                    .next()
+                    .unwrap_or_else(|| (blank_mesh(), blank_mesh(), 0));
                 params
                     .meshes
-                    .insert(cache.patches[index].id(), mesh_from(region.land))
+                    .insert(cache.patches[index].id(), land)
                     .expect("land mesh retained");
                 params
                     .meshes
-                    .insert(cache.waters[index].id(), mesh_from(region.water))
+                    .insert(cache.waters[index].id(), water)
                     .expect("water mesh retained");
-            } else {
-                params
-                    .meshes
-                    .insert(cache.patches[index].id(), blank_mesh())
-                    .expect("terrain mesh retained");
-                params
-                    .meshes
-                    .insert(cache.waters[index].id(), blank_mesh())
-                    .expect("water mesh retained");
-                cache.lod_levels[index] = 0;
+                cache.lod_levels[index] = stride;
+            }
+            if let Some(imported) = prepared.imported {
+                params.terrain.commit(
+                    imported,
+                    prepared.request.scene,
+                    &mut params.meshes,
+                    &mut params.buffers,
+                    &mut params.commands,
+                );
+            }
+            if let Some(mut material) = params.ground_materials.get_mut(&cache.ground_material) {
+                material.extension.settings = GroundSettings::at(cache.origin);
+            }
+            if let Some(mut material) = params.water_materials.get_mut(&cache.water_material) {
+                material.extension.settings = WaterSettings::at(cache.origin);
+            }
+            cache.mesh_counts[2] += 1;
+        } else {
+            // Arc ownership prevents identity reuse while a job is in flight.
+            // Never show a different physical scene under current measurements.
+            cache.mesh_counts[3] += 1;
+        }
+        cache.cpu_timings.mesh_commit_us = commit_started.elapsed().as_micros();
+    }
+    let coherent = cache
+        .active_scene
+        .as_ref()
+        .is_some_and(|source| Arc::as_ptr(source) as usize == scene_identity);
+    let desired_plan = DisplayPlan::at(state.observer, cache.display_plan.space);
+    let anchor_transition = desired_plan.space != cache.display_plan.space;
+    let rebase = !coherent
+        || anchor_transition
+        || !desired_plan.space && frame.origin.distance(cache.origin.origin) > rebase_distance;
+    let detail_valid = if desired_plan.space {
+        cache
+            .display_plan
+            .detail
+            .valid_for(state.observer, detail_focal, cache.last_detail_focal)
+    } else {
+        cache.last_detail_focal == detail_focal
+    };
+    let mesh_needed = rebase || !detail_valid;
+    if mesh_needed && cache.mesh_job.is_none() {
+        let request_started = Instant::now();
+        let source = surface.shared(state.boundaries_enabled);
+        let mut plan = desired_plan;
+        if !rebase {
+            // Projection responds now. Coordinate origin remains the coherent
+            // installed origin; reference detail follows the requested real eye.
+            plan.local = cache.origin;
+            plan.coordinate_observer = cache.display_plan.coordinate_observer;
+            if !plan.space {
+                plan.detail = ReferenceDetail::near(frame.origin);
             }
         }
-        cache.last_observer = Some(state.observer);
-        cache.last_boundaries = state.boundaries_enabled;
-        cache.last_fov = lens.vertical_fov_deg;
-        cache.last_quality = state.quality;
-        params
-            .meshes
-            .insert(cache.stars_mesh.id(), mesh_from(star_mesh(focal)))
-            .expect("star mesh retained");
+        let request = preparation::Request {
+            classify_import: !params.terrain.contains_scene(&source),
+            scene: source,
+            observer: state.observer,
+            local: plan.local,
+            plan,
+            focal: detail_focal,
+        };
+        cache.mesh_job = Some(AsyncComputeTaskPool::get().spawn(async move { request.prepare() }));
+        cache.mesh_counts[0] += 1;
+        cache.mesh_counts[4] = 1;
+        cache.cpu_timings.mesh_request_us = request_started.elapsed().as_micros();
     }
+
     if boundaries_changed || origin_changed || grass_quality_changed || grass_setting_changed {
         cache.grass_generation = cache.grass_generation.wrapping_add(1);
         cache.grass_observer = None;
@@ -740,7 +1016,7 @@ pub fn render(
     let regenerate_grass = cache
         .grass_observer
         .is_none_or(|observer| observer.eye_position().distance(frame.origin) > 4.0);
-    if grass_enabled && regenerate_grass && cache.grass_job.is_none() {
+    if grass_enabled && coherent && regenerate_grass && cache.grass_job.is_none() {
         let mut placement = std::mem::take(&mut cache.grass_placement);
         let source = surface.shared(state.boundaries_enabled);
         let local = cache.origin;
@@ -785,8 +1061,11 @@ pub fn render(
             .intersect(frame.center_ray())
             .is_none_or(|ground| *distance < ground.hit.distance_m)
     });
-    cache.presentation_ready =
-        cache.grass_job.is_none() && (!grass_enabled || cache.grass_observer.is_some());
+    cache.presentation_ready = coherent
+        && !mesh_needed
+        && cache.mesh_job.is_none()
+        && cache.grass_job.is_none()
+        && (!grass_enabled || cache.grass_observer.is_some());
     let (position, forward, up) = cache.origin.camera(frame);
     let position = Vec3::from_array(position);
     let forward = Vec3::from_array(forward).normalize();
@@ -797,6 +1076,12 @@ pub fn render(
         color: Color::NONE,
         ..default()
     };
+    for (_, mut light) in &mut params.lights {
+        // Bevy computes the cascade depth reciprocal from translated f32
+        // corner extrema. Remote 12 m slices can quantize to zero extent.
+        light.shadow_maps_enabled =
+            earth_math::rendering::continuous::nearby_shadow_maps(state.observer);
+    }
     if let Some(mut material) = params.ground_materials.get_mut(&cache.ground_material) {
         material.extension.settings.sky_fill = Vec4::ZERO;
         material.extension.settings.eclipse = EclipseSettings::default();
@@ -811,7 +1096,7 @@ pub fn render(
         let sun_direction = (astro.sun.apparent_center_ecef_m - frame.origin)
             .normalized()
             .unwrap();
-        let sun_up = sun_direction.dot(cache.origin.basis.up);
+        let sun_up = sun_direction.dot(earth_math::EnuBasis::at(state.observer.eye_geodetic()).up);
         // Artistic clear-sky color/eye adaptation, not an atmospheric measurement.
         let daylight = ((sun_up + 0.12) / 0.22).clamp(0.0, 1.0) as f32;
         let atmosphere =
@@ -885,7 +1170,10 @@ pub fn render(
                 density: 0.000018 * atmosphere,
             },
         };
-        let light_direction = Vec3::from_array(cache.origin.direction(sun_direction)).normalize();
+        // A single Earth-centered directional illumination model at every
+        // altitude; apparent eye-to-Sun direction is retained for sky viewing.
+        let earth_sun = astro.sun.center_ecef_m.normalized().unwrap();
+        let light_direction = Vec3::from_array(cache.origin.direction(earth_sun)).normalize();
         let safe_up = if light_direction.dot(Vec3::Y).abs() > 0.99 {
             Vec3::Z
         } else {
@@ -905,18 +1193,78 @@ pub fn render(
             );
         }
         if let Some(mut material) = params.moon_materials.get_mut(&cache.moon_material) {
-            material.extension.illumination =
-                Vec3::from_array(cache.origin.direction(astro.moon_to_sun_direction_ecef))
-                    .extend(0.0);
+            material.extension.settings = lunar::LunarSettings::at(cache.origin, &astro);
         }
-        if let Some(mut material) = params.materials.get_mut(&cache.stars_material) {
-            let brightness = 2.0;
-            material.base_color = Color::linear_rgba(
-                brightness,
-                brightness,
-                brightness,
-                1.0 - daylight * atmosphere * (1.0 - eclipse_stars),
+        if let Some(mut material) = params.star_materials.get_mut(&cache.stars_material) {
+            let phase = earth_math::rendering::stars::display_phases(
+                state.star_phase_seconds.unwrap_or(time.elapsed_secs_f64()),
+                if state.star_phase_seconds.is_some() {
+                    0.0
+                } else {
+                    time.delta_secs_f64()
+                },
             );
+            let up = cache
+                .origin
+                .direction(earth_math::EnuBasis::at(state.observer.eye_geodetic()).up);
+            material.extension.settings = StarSettings {
+                phase_sin: Vec4::from_array(phase[0]),
+                phase_cos: Vec4::from_array(phase[1]),
+                up: Vec3::from_array(up).extend(
+                    earth_math::rendering::stars::scintillation::reference_zenith_variance(
+                        state.observer.eye_geodetic().height_m,
+                    )
+                    .unwrap_or(0.0) as f32,
+                ),
+                visibility: Vec4::new(
+                    1.0 - daylight * atmosphere * (1.0 - eclipse_stars),
+                    if state.star_phase_seconds.is_some() {
+                        0.0
+                    } else {
+                        time.delta_secs()
+                    },
+                    0.0,
+                    0.0,
+                ),
+            };
+        }
+        if let Some(mut material) = params.fish_materials.get_mut(&cache.fish_material) {
+            let phase = earth_math::rendering::stars::display_phases(
+                state.star_phase_seconds.unwrap_or(time.elapsed_secs_f64()),
+                if state.star_phase_seconds.is_some() {
+                    0.0
+                } else {
+                    time.delta_secs_f64()
+                },
+            );
+            let rotation = astro.icrf_to_ecef.transpose();
+            let pack = |v: Vec3d| {
+                let v = rotation.transform(v);
+                Vec4::new(v.x as f32, v.y as f32, v.z as f32, 0.0)
+            };
+            material.stars = FisheyeStars {
+                phase_sin: Vec4::from_array(phase[0]),
+                phase_cos: Vec4::from_array(phase[1]),
+                vertical: pack(earth_math::EnuBasis::at(state.observer.eye_geodetic()).up).with_w(
+                    earth_math::rendering::stars::scintillation::reference_zenith_variance(
+                        state.observer.eye_geodetic().height_m,
+                    )
+                    .unwrap_or(0.0) as f32,
+                ),
+                right: pack(frame.right),
+                up: pack(frame.up),
+                forward: pack(frame.forward),
+                visibility: Vec4::new(
+                    1.0 - daylight * atmosphere * (1.0 - eclipse_stars),
+                    if state.star_phase_seconds.is_some() {
+                        0.0
+                    } else {
+                        time.delta_secs()
+                    },
+                    0.0,
+                    0.0,
+                ),
+            };
         }
         for (mut transform, mut visibility, object) in &mut params.objects {
             *visibility = Visibility::Visible;
@@ -934,6 +1282,9 @@ pub fn render(
                     transform.rotation = celestial_rotation(cache.origin, astro.moon.body_to_ecef);
                 }
                 SceneObject::Stars => {
+                    if fisheye {
+                        *visibility = Visibility::Hidden;
+                    }
                     transform.translation = position;
                     transform.rotation = celestial_rotation(cache.origin, astro.icrf_to_ecef);
                 }
@@ -944,6 +1295,9 @@ pub fn render(
             }
         }
     } else {
+        if let Some(mut material) = params.fish_materials.get_mut(&cache.fish_material) {
+            material.stars.visibility.x = 0.0;
+        }
         for (_, mut visibility, object) in &mut params.objects {
             if matches!(
                 object,
@@ -953,6 +1307,58 @@ pub fn render(
             }
         }
     }
+    let water_settings = params
+        .water_materials
+        .get(&cache.water_material)
+        .map(|material| material.extension.settings)
+        .unwrap_or(WaterSettings::at(cache.origin));
+    let imported_triangles = params.terrain.update(
+        scene,
+        state.boundaries_enabled,
+        cache.display_plan.coordinate_observer,
+        coherent,
+        water_settings,
+    );
+    let (draw_chunks, visible_chunks, visible_faces) = params.terrain.visibility_statistics();
+    cache.draw_chunks = draw_chunks;
+    cache.view_visible_chunks = visible_chunks;
+    cache.view_visible_triangles = visible_faces;
+    let survey_lighting = params
+        .ground_materials
+        .get(&cache.ground_material)
+        .map(|material| material.extension.settings)
+        .unwrap_or(GroundSettings::at(cache.origin));
+    params.survey.update(
+        &survey_state,
+        cache.origin,
+        frame.origin,
+        survey_lighting,
+        &mut params.commands,
+        &mut params.meshes,
+    );
+    // A new physical scene is hidden until its complete display is available.
+    // Global/DEM classification uses terrain's own draw chunks; its retained
+    // legacy placeholders must never become visible during an origin rebase.
+    let classifier = terrain::uses_classifier(scene);
+    for (_, mut visibility, object) in &mut params.objects {
+        if let Some(surface_visibility) = surface_visibility(
+            object,
+            coherent,
+            classifier,
+            grass_enabled,
+            !cache.blades.is_empty(),
+        ) {
+            *visibility = surface_visibility;
+        }
+    }
+    if !coherent {
+        cache.triangles = 0;
+    }
+    if classifier {
+        cache.triangles = imported_triangles;
+        cache.lod_levels = [1; 4];
+    }
+    let fish_faces = earth_math::rendering::fisheye::active_faces(lens);
     for (mut transform, mut projection, mut camera, role, fog) in &mut params.cameras {
         if let Some(mut fog) = fog {
             *fog = haze.clone();
@@ -967,7 +1373,7 @@ pub fn render(
                 }
             }
             CameraRole::Face(face) => {
-                camera.is_active = fisheye && !refracted;
+                camera.is_active = fish_faces[*face] && !refracted;
                 camera.clear_color = sky.into();
                 let (direction, face_up) = match face {
                     0 => (forward, up),
@@ -978,6 +1384,13 @@ pub fn render(
                     _ => (-up, forward),
                 };
                 *transform = Transform::from_translation(position).looking_to(direction, face_up);
+                if let Projection::Perspective(p) = &mut *projection {
+                    p.fov = if *face == 0 {
+                        fish_projection.fov_radians
+                    } else {
+                        std::f32::consts::FRAC_PI_2
+                    };
+                }
             }
             CameraRole::Composite => {
                 camera.is_active = fisheye || refracted;
@@ -1004,6 +1417,12 @@ pub fn render(
         material.parameters = Vec4::new(
             dimensions.0 as f32 / dimensions.1 as f32,
             (lens.vertical_fov_deg.to_radians() * 0.5) as f32,
+            dimensions.0 as f32,
+            dimensions.1 as f32,
+        );
+        material.sampling = Vec4::new(
+            fish_projection.projection_scale,
+            if fish_projection.adaptive { 1.0 } else { 0.0 },
             0.0,
             0.0,
         );
@@ -1021,11 +1440,16 @@ pub fn render(
     cache.mode = if refracted {
         "Curved optical rays / native pixels / f32 display"
     } else if fisheye {
-        "GPU fisheye / six views / 4x MSAA"
+        if fish_faces[1] {
+            "GPU fisheye / five views / 4x MSAA"
+        } else {
+            "GPU fisheye / one view / 4x MSAA"
+        }
     } else {
         "GPU / 4x MSAA"
     };
     cache.render_ms = started.elapsed().as_millis();
+    cache.cpu_timings.total_us = started.elapsed().as_micros();
 }
 
 fn celestial_rotation(local: LocalFrame, rotation: earth_math::astro::Mat3d) -> Quat {
@@ -1037,80 +1461,42 @@ fn celestial_rotation(local: LocalFrame, rotation: earth_math::astro::Mat3d) -> 
     .map(|axis| Vec3::from_array(local.direction(rotation.transform(axis))));
     Quat::from_mat3(&Mat3::from_cols(axes[0], axes[1], axes[2]))
 }
-fn moon_mesh() -> RenderMesh {
+fn star_mesh() -> Mesh {
     let mut mesh = RenderMesh::default();
-    let columns = 192_usize;
-    let rows = 96_usize;
-    for row in 0..=rows {
-        let latitude =
-            std::f64::consts::FRAC_PI_2 - std::f64::consts::PI * row as f64 / rows as f64;
-        for column in 0..=columns {
-            let longitude = std::f64::consts::TAU * column as f64 / columns as f64;
-            let normal = Vec3d::new(
-                latitude.cos() * longitude.cos(),
-                latitude.cos() * longitude.sin(),
-                latitude.sin(),
-            );
-            // Original smooth albedo variation, not a lunar surface map.
-            let albedo = 0.65 + 0.12 * (3.0 * longitude + 0.7).sin() * (4.0 * latitude).cos();
-            let brightness = albedo as f32;
-            mesh.positions
-                .push([normal.x as f32, normal.y as f32, normal.z as f32]);
-            mesh.normals
-                .push([normal.x as f32, normal.y as f32, normal.z as f32]);
-            mesh.colors
-                .push([brightness, brightness * 0.97, brightness * 0.92, 1.0]);
-        }
-    }
-    for row in 0..rows {
-        for column in 0..columns {
-            let nw = (row * (columns + 1) + column) as u32;
-            let sw = nw + columns as u32 + 1;
-            mesh.indices.extend([nw, sw, sw + 1, nw, sw + 1, nw + 1]);
-        }
-    }
-    mesh
-}
-fn star_mesh(focal: f64) -> RenderMesh {
-    let mut mesh = RenderMesh::default();
-    let mut random = 0x5747_5338_3445_4152_u64;
-    let mut next = || {
-        random ^= random << 13;
-        random ^= random >> 7;
-        random ^= random << 17;
-        (random >> 11) as f64 / ((1_u64 << 53) as f64)
-    };
-    for _ in 0..3_000 {
-        let z = 2.0 * next() - 1.0;
-        let longitude = next() * std::f64::consts::TAU;
-        let radius = (1.0 - z * z).sqrt();
-        let normal = Vec3d::new(radius * longitude.cos(), radius * longitude.sin(), z);
-        let axis = if z.abs() > 0.9 {
+    let mut uv = Vec::new();
+    let mut ids = Vec::new();
+    for (id, star) in earth_math::rendering::stars::catalogue().iter().enumerate() {
+        let normal = star.direction;
+        let axis = if normal.z.abs() > 0.9 {
             Vec3d::new(1.0, 0.0, 0.0)
         } else {
             Vec3d::new(0.0, 0.0, 1.0)
         };
         let right = normal.cross(axis).normalized().unwrap();
         let up = right.cross(normal).normalized().unwrap();
-        let size = (0.65 + 0.65 * next()) / focal.max(1.0) * 2.0e12;
-        let color = [
-            0.78 + 0.22 * next() as f32,
-            0.82 + 0.18 * next() as f32,
-            1.0,
-            1.0,
-        ];
+        let size = 1.0;
         let base = mesh.positions.len() as u32;
         for (x, y) in [(-1.0, -1.0), (1.0, -1.0), (1.0, 1.0), (-1.0, 1.0)] {
-            let point = normal * 2.0e12 + right * (size * x * 0.5) + up * (size * y * 0.5);
+            let point = normal * 2.0e12 + right * (size * x) + up * (size * y);
             mesh.positions
                 .push([point.x as f32, point.y as f32, point.z as f32]);
-            mesh.normals.push([0.0, 0.0, 1.0]);
-            mesh.colors.push(color);
+            mesh.normals
+                .push([normal.x as f32, normal.y as f32, normal.z as f32]);
+            mesh.colors.push([
+                star.color[0] * star.relative_brightness as f32,
+                star.color[1] * star.relative_brightness as f32,
+                star.color[2] * star.relative_brightness as f32,
+                1.0,
+            ]);
+            uv.push([(x as f32 + 1.0) * 0.5, (y as f32 + 1.0) * 0.5]);
+            ids.push([id as f32, 0.0]);
         }
         mesh.indices
             .extend([base, base + 1, base + 2, base, base + 2, base + 3]);
     }
-    mesh
+    mesh_from(mesh)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_0, uv)
+        .with_inserted_attribute(Mesh::ATTRIBUTE_UV_1, ids)
 }
 
 /// Original artistic clear-sky gradient, located behind all modeled bodies and

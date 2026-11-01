@@ -6,6 +6,9 @@ pub const SURFACE_PRESSURE_PA: f64 = 101977.1796875;
 pub const SURFACE_GEOPOTENTIAL_M: f64 = 0.37937498092651367;
 pub const TEMPERATURE_2M_K: f64 = 296.763427734375;
 pub const SPECIFIC_HUMIDITY_2M: f64 = 0.014227576553821564;
+pub const TEMPERATURE_80M_K: f64 = 295.8203125;
+pub const PRESSURE_80M_PA: f64 = 101047.84375;
+pub const SPECIFIC_HUMIDITY_80M: f64 = 0.013504532165825367;
 // Pressure Pa, geopotential height gpm, temperature K, specific humidity kg/kg.
 #[rustfmt::skip]
 pub const PRESSURE_LEVELS: &[(f64, f64, f64, f64)] = &[

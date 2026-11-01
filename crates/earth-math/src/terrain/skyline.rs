@@ -1,6 +1,8 @@
 //! Heading-plane upper skyline: exact-model geometric candidates, with an
 //! explicitly sampled fallback for masked ellipsoid boundaries.
 use super::*;
+use std::sync::atomic::{AtomicBool, Ordering};
+static NEVER_CANCELLED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SkylineMethod {
@@ -69,12 +71,15 @@ struct Candidate {
 }
 
 impl TerrainPatch {
-    fn highest_section_point(&self, section: Section) -> Option<Candidate> {
+    fn highest_section_point(&self, section: Section, cancelled: &AtomicBool) -> Option<Candidate> {
         let mut result: Option<Candidate> = None;
         let mut stack = [0usize; 64];
         let mut length = 1;
         let tolerance = 1e-7 + 32.0 * f64::EPSILON * section.origin.length().max(WGS84_A_M);
         while length > 0 {
+            if cancelled.load(Ordering::Relaxed) {
+                return None;
+            }
             length -= 1;
             let node = self.nodes[stack[length]];
             if !section.crosses(node.bounds) {
@@ -187,8 +192,20 @@ impl TerrainScene {
     /// ellipsoid, a finite angular search resolves a local boundary. Its method
     /// explicitly identifies the result as an estimate, not a certified maximum.
     pub fn skyline(&self, observer: Observer) -> Option<SkylineMeasurement> {
+        self.skyline_cancellable(observer, &NEVER_CANCELLED)
+    }
+    /// Identical numerical model, with cancellation between BVH nodes and rays.
+    pub fn skyline_cancellable(
+        &self,
+        observer: Observer,
+        cancelled: &AtomicBool,
+    ) -> Option<SkylineMeasurement> {
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         if self.is_boundary_only() {
-            let mut measurement = TerrainScene::default().skyline(observer)?;
+            let mut measurement =
+                TerrainScene::default().skyline_cancellable(observer, cancelled)?;
             measurement.hit = self.classify_ellipsoid_hit(measurement.hit.hit);
             return Some(measurement);
         }
@@ -210,8 +227,11 @@ impl TerrainScene {
         let candidate = self
             .patches
             .iter()
-            .filter_map(|patch| patch.highest_section_point(section))
+            .filter_map(|patch| patch.highest_section_point(section, cancelled))
             .max_by(|a, b| a.elevation.total_cmp(&b.elevation));
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         let mut terrain_hit = candidate.and_then(|point| {
             self.intersect(section.ray(point.elevation))
                 .map(|hit| (point.elevation, hit, false))
@@ -289,12 +309,18 @@ impl TerrainScene {
         let step = (upper - lower) / 2048.0;
         let mut previous = upper;
         for index in 0..=2048 {
+            if cancelled.load(Ordering::Relaxed) {
+                return None;
+            }
             let angle = upper - index as f64 * step;
             if let Some(hit) = self.intersect(section.ray(angle)) {
                 let mut lo = angle;
                 let mut hi = previous;
                 let mut selected = hit;
                 for _ in 0..40 {
+                    if cancelled.load(Ordering::Relaxed) {
+                        return None;
+                    }
                     if hi - lo <= 1e-11 {
                         break;
                     }

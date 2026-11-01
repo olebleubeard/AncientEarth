@@ -113,7 +113,29 @@ impl Ephemeris {
         observer_ecef_m: Vec3d,
         follow_earth: bool,
     ) -> Result<AstronomyFrame, AstroError> {
-        if !observer_ecef_m.is_finite() || observer_ecef_m.length() > 1.1e9 {
+        self.sample_receiver(instant, eop, observer_ecef_m, follow_earth, false)
+    }
+    /// Kinematic exploration convention. Light-time/parallax use the actual
+    /// eye; aberration uses a bounded WGS84 surface observatory reference.
+    /// This velocity is not the derivative of the virtual camera trajectory.
+    pub fn sample_for_inspection(
+        &self,
+        instant: AstroInstant,
+        eop: Option<&EarthOrientationData>,
+        observer_ecef_m: Vec3d,
+        follow_earth: bool,
+    ) -> Result<AstronomyFrame, AstroError> {
+        self.sample_receiver(instant, eop, observer_ecef_m, follow_earth, true)
+    }
+    fn sample_receiver(
+        &self,
+        instant: AstroInstant,
+        eop: Option<&EarthOrientationData>,
+        observer_ecef_m: Vec3d,
+        follow_earth: bool,
+        inspection_reference: bool,
+    ) -> Result<AstronomyFrame, AstroError> {
+        if !crate::supported_astronomy_position(observer_ecef_m) {
             return Err(AstroError::InvalidObserver);
         }
         let tt = instant.tt_seconds_j2000();
@@ -133,11 +155,31 @@ impl Ephemeris {
         );
         let corotating_velocity =
             earth.velocity_mps + rotation.transpose().transform(spin_velocity);
-        let observer_velocity = if follow_earth {
+        let observer_velocity = if follow_earth && inspection_reference {
+            let eye = crate::ecef_to_geodetic(observer_ecef_m)
+                .map_err(|_| AstroError::InvalidObserver)?;
+            let reference = crate::geodetic_to_ecef(crate::Geodetic {
+                height_m: 0.0,
+                ..eye
+            });
+            let reference_spin = Vec3d::new(
+                -reference.y * angular_velocity,
+                reference.x * angular_velocity,
+                0.0,
+            );
+            earth.velocity_mps + rotation.transpose().transform(reference_spin)
+        } else if follow_earth {
             corotating_velocity
         } else {
             earth.velocity_mps
         };
+        if !corotating_velocity.is_finite()
+            || corotating_velocity.length() >= LIGHT_SPEED_MPS
+            || !observer_velocity.is_finite()
+            || observer_velocity.length() >= LIGHT_SPEED_MPS
+        {
+            return Err(AstroError::InvalidObserver);
+        }
         let build = |id, radius| -> Result<CelestialBody, AstroError> {
             let simultaneous = self.state(id, tdb)?.position_m;
             let mut light_time = (simultaneous - observer_position).length() / LIGHT_SPEED_MPS;
@@ -168,7 +210,7 @@ impl Ephemeris {
         let moon = build(301, MOON_RADIUS_M)?;
         let sun_emission = self.state(10, tdb - sun.light_time_seconds)?;
         let moon_emission_state = self.state(301, tdb - moon.light_time_seconds)?;
-        let eclipse = SolarEclipseField {
+        let eye_field = SolarEclipseField {
             anchor_ecef_m: observer_ecef_m,
             sun_relative_ecef_m: rotation.transform(sun_emission.position_m - observer_position),
             moon_relative_ecef_m: rotation
@@ -180,18 +222,62 @@ impl Ephemeris {
             sun_radius_m: SUN_RADIUS_M,
             moon_radius_m: MOON_RADIUS_M,
         };
-        let observer_eclipse = if follow_earth {
-            eclipse
+        let observer_eclipse = if follow_earth && !inspection_reference {
+            eye_field
         } else {
             SolarEclipseField {
                 observer_velocity_ecef_mps: rotation.transform(observer_velocity),
                 spin_ecef_radians_per_second: Vec3d::ZERO,
-                ..eclipse
+                ..eye_field
             }
+        };
+        // Re-solve the local surface field at Earth's center at remote eyes;
+        // never extrapolate a local retarded-state approximation across AU.
+        let eclipse = if observer_ecef_m.length() > 1.0e9 {
+            let emission = |id| -> Result<CartesianState, AstroError> {
+                let mut delay =
+                    (self.state(id, tdb)?.position_m - earth.position_m).length() / LIGHT_SPEED_MPS;
+                let mut state = self.state(id, tdb - delay)?;
+                for _ in 0..12 {
+                    state = self.state(id, tdb - delay)?;
+                    let next = (state.position_m - earth.position_m).length() / LIGHT_SPEED_MPS;
+                    if (next - delay).abs() < 1e-10 {
+                        break;
+                    }
+                    delay = next;
+                }
+                Ok(state)
+            };
+            let sun_center_emission = emission(10)?;
+            let moon_center_emission = emission(301)?;
+            SolarEclipseField {
+                anchor_ecef_m: Vec3d::ZERO,
+                sun_relative_ecef_m: rotation
+                    .transform(sun_center_emission.position_m - earth.position_m),
+                moon_relative_ecef_m: rotation
+                    .transform(moon_center_emission.position_m - earth.position_m),
+                sun_velocity_ecef_mps: rotation.transform(sun_center_emission.velocity_mps),
+                moon_velocity_ecef_mps: rotation.transform(moon_center_emission.velocity_mps),
+                observer_velocity_ecef_mps: rotation.transform(earth.velocity_mps),
+                ..eye_field
+            }
+        } else {
+            eye_field
         };
         // Illumination at the lunar emission event, with sunlight retarded to
         // that event. This is geometric phase without photometric opposition effects.
         let lunar_epoch = tdb - moon.light_time_seconds;
+        let lunar_state = self.state(301, lunar_epoch)?;
+        let terrestrial_state = self.state(399, lunar_epoch)?;
+        let lunar_orientation = super::lunar::LunarOrientation::from_state(
+            lunar_epoch,
+            CartesianState {
+                position_m: lunar_state.position_m - terrestrial_state.position_m,
+                velocity_mps: lunar_state.velocity_mps - terrestrial_state.velocity_mps,
+            },
+            moon.body_to_ecef,
+            rotation,
+        )?;
         let moon_emission = self.state(301, lunar_epoch)?.position_m;
         let mut sun_epoch = lunar_epoch;
         let mut moon_to_sun = Vec3d::ZERO;
@@ -209,6 +295,16 @@ impl Ephemeris {
             ((1.0 + sun_direction.dot(observer_direction)) * 0.5).clamp(0.0, 1.0);
         let date = instant.calendar();
         Ok(AstronomyFrame {
+            sample_instant: instant,
+            sample_observer_ecef_m: observer_ecef_m,
+            sample_follow_earth: follow_earth,
+            velocity_convention: if !follow_earth {
+                ApparentVelocityConvention::EarthTranslation
+            } else if inspection_reference {
+                ApparentVelocityConvention::SurfaceReference
+            } else {
+                ApparentVelocityConvention::CorotatingEye
+            },
             sun,
             moon,
             icrf_to_ecef: rotation,
@@ -224,6 +320,7 @@ impl Ephemeris {
             },
             moon_illuminated_fraction: illuminated_fraction,
             moon_to_sun_direction_ecef: rotation.transform(sun_direction),
+            lunar_orientation,
             eclipse,
             observer_eclipse,
         })

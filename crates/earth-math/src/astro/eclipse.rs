@@ -141,8 +141,10 @@ impl SolarEclipseField {
         ]
         .iter()
         .all(|v| v.is_finite())
-            || position_ecef_m.length() > 1.1e9
-            || self.anchor_ecef_m.length() > 1.1e9
+            || !crate::supported_astronomy_position(position_ecef_m)
+            || !crate::supported_astronomy_position(self.anchor_ecef_m)
+            // Retain the finite local expansion, even for a remote eye anchor.
+            || (position_ecef_m - self.anchor_ecef_m).length() > 1.1e9
             || !self.sun_radius_m.is_finite()
             || !self.moon_radius_m.is_finite()
             || self.sun_radius_m <= 0.0

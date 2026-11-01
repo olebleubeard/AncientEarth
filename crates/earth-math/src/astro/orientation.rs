@@ -126,6 +126,15 @@ fn bias_precession_nutation(t: f64) -> Mat3d {
         .mul(Mat3d::rotation_z(gamb))
 }
 
+/// Modeled celestial intermediate pole in ICRF/GCRS-aligned axes. This is the
+/// third row of the same bias/precession/nutation rotation used below, before
+/// terrestrial spin and polar motion. It is a conventional orientation pole,
+/// not a claim to reconstruct the instantaneous angular-velocity vector.
+pub(super) fn celestial_intermediate_pole(tt_seconds_j2000: f64) -> crate::Vec3d {
+    let row = bias_precession_nutation(tt_seconds_j2000 / CENTURY_SECONDS).rows[2];
+    crate::Vec3d::new(row[0], row[1], row[2])
+}
+
 fn fundamental_arguments(t: f64) -> [f64; 8] {
     let arcseconds = [
         polynomial(

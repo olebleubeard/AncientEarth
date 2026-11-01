@@ -568,6 +568,8 @@ profiling 1.0.18 — MIT
   Upstream: https://github.com/aclysma/profiling
 pxfm 0.1.30 — BSD-3-Clause
   Upstream: https://github.com/awxkee/pxfm
+quick-error 2.0.1 — MIT
+  Upstream: http://github.com/tailhook/quick-error
 quote 1.0.47 — MIT
   Upstream: https://github.com/dtolnay/quote
 radium 0.7.0 — MIT
@@ -682,6 +684,8 @@ thiserror-impl 2.0.21 — MIT
   Upstream: https://github.com/dtolnay/thiserror
 thread_local 1.1.10 — MIT
   Upstream: https://github.com/Amanieu/thread_local-rs
+tiff 0.11.3 — MIT
+  Upstream: https://github.com/image-rs/image-tiff
 tinystr 0.8.4 — Unicode-3.0
   Upstream: https://github.com/unicode-org/icu4x
 tinyvec 1.13.3 — Zlib
@@ -893,6 +897,30 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+==============================================================================
+quick-error@2.0.1/LICENSE-MIT
+Text SHA-256: 058f01fe181608d027fcde7e528fc03ea3cf90f30903c407644b0a9bbc54f500
+
+Copyright (c) 2015 The quick-error Developers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ==============================================================================
 Astropy-IERS-BSD.txt — https://github.com/astropy/astropy-iers-data/blob/798223ef83d161f89f7feb0b75f7a212de6c0353/LICENSE.rst
@@ -2808,6 +2836,32 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+==============================================================================
+tiff@0.11.3/LICENSE
+Text SHA-256: 20c097d0de27e2adc179140a3d542091951a030699c7e1c78655f2a2d08d4e3e
+
+MIT License
+
+Copyright (c) 2018 PistonDevelopers
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ==============================================================================
 synstructure@0.14.0/LICENSE
@@ -11036,6 +11090,7 @@ crc32fast@1.5.2/LICENSE-APACHE
 dpi@0.1.2/LICENSE
 is_terminal_polyfill@1.70.2/LICENSE-APACHE
 once_cell_polyfill@1.70.2/LICENSE-APACHE
+quick-error@2.0.1/LICENSE-APACHE
 winapi@0.3.9/LICENSE-APACHE
 winit@0.30.13/LICENSE
 Text SHA-256: a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae
@@ -19183,6 +19238,19 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR
 IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
+
+==============================================================================
+tiff@0.11.3/tests/COPYRIGHT
+Text SHA-256: c6d1d56bb6e2fe4f0aed4aa8553261dd65247db6db50c87c9e9f3fbe095e2202
+
+subsubifd.tif:
+  url: https://data.kitware.com/api/v1/file/hashsum/sha512/372ca32735c8a8fdbe2286dabead9e779da63f10ba81eda84625e5273f76d74ca1a47a978f67e9c00c12f7f72009c7b2c07a641e643bb0c463812f4ae7f15d6e/download
+  credit: https://github.com/DigitalSlideArchive/tifftools/commit/4d00c70dbce828262f86c1431f7c66b1748965ac
+  license: CC0
+usda/*.tif
+  url: https://registry.opendata.aws/naip/index.html
+  credit: NAIP on AWS was accessed on 2026-01-28 from https://registry.opendata.aws/naip.
+  license: Public Domain
 
 ==============================================================================
 ash@0.38.0+1.3.281/LICENSE-MIT

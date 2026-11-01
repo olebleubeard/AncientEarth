@@ -1,0 +1,5 @@
+scripts/optical_normal_selected_fixture.rs
+scripts/optical_normal_selected_split.rs
+scripts/optical_normal_selected_state.wgsl
+scripts/optical_normal_selected_control.wgsl
+scripts/optical_cartesian_producer.wgsl

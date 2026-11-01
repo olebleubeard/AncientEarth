@@ -1,11 +1,21 @@
 //! Canonical Earth silhouette guides and explicitly defined world-space rulers.
-//! The finite contour search is an estimate, not a certified global maximum.
+//! Runtime geometric guides project the analytic ellipsoid tangent contour;
+//! optical and archived terrain searches retain explicit finite-search limits.
 use crate::{CameraFrame, Geodetic, Lens, Observer, Ray, ScreenRect, SurfaceHit, TerrainScene};
-use std::{cell::RefCell, collections::HashMap};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    sync::atomic::{AtomicBool, Ordering},
+};
+mod analytic;
 
 const COLUMNS: usize = 64;
 const ROWS: usize = 36;
 const BRACKET_PIXELS: f64 = 0.025;
+const OPTICAL_COLUMNS: usize = 8;
+const OPTICAL_ROWS: usize = 4;
+const OPTICAL_QUERY_BUDGET: usize = 512;
+static NEVER_CANCELLED: AtomicBool = AtomicBool::new(false);
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct GuideViewport {
@@ -61,7 +71,8 @@ pub struct HorizonPoint {
     /// Physical framebuffer coordinates, including subpixel refinement.
     pub pixel: [f64; 2],
     pub hit: SurfaceHit,
-    /// Width of this local hit/miss bracket, not a global error bound.
+    /// Width of this local hit/miss bracket, not a global error bound. Zero for
+    /// constructed analytic tangent points does not mean zero numerical error.
     pub bracket_pixels: f64,
 }
 
@@ -74,6 +85,7 @@ pub struct HorizonProfile {
     /// Shortest WGS84 ellipsoid geodesic between the selected endpoints'
     /// latitudes and longitudes; terrain heights are projected to zero.
     pub surface_width_m: Option<f64>,
+    /// Screen search spacing, or zero when constructing the analytic contour.
     pub coarse_spacing_pixels: [f64; 2],
     pub viewport: GuideViewport,
     frame: CameraFrame,
@@ -98,6 +110,7 @@ pub struct GuideRuler {
 struct Sample {
     pixel: [f64; 2],
     hit: bool,
+    optical_surface: Option<SurfaceHit>,
 }
 #[derive(Clone, Copy)]
 struct Boundary {
@@ -111,9 +124,14 @@ struct Search<'a> {
     lens: Lens,
     viewport: GuideViewport,
     samples: RefCell<HashMap<[u64; 2], Option<Sample>>>,
+    cancelled: &'a AtomicBool,
+    queries: Cell<usize>,
 }
 impl Search<'_> {
     fn sample(&self, pixel: [f64; 2]) -> Option<Sample> {
+        if self.cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         let key = pixel.map(f64::to_bits);
         if let Some(sample) = self.samples.borrow().get(&key) {
             return *sample;
@@ -126,28 +144,39 @@ impl Search<'_> {
                     origin: self.frame.origin,
                     direction,
                 };
-                let hit = if let Some(profile) = self.atmosphere {
+                let (hit, optical_surface) = if let Some(profile) = self.atmosphere {
+                    if self.queries.get() >= OPTICAL_QUERY_BUDGET {
+                        return None;
+                    }
+                    self.queries.set(self.queries.get() + 1);
                     // An unresolved ray is not a valid sky sample or a contour.
-                    profile.trace(ray, self.scene).ok()?.surface.is_some()
+                    let surface = profile.trace(ray, self.scene).ok()?.surface;
+                    (surface.is_some(), surface)
                 } else {
-                    self.scene.intersects_any(ray)
+                    (self.scene.intersects_any(ray), None)
                 };
-                Some(Sample { pixel, hit })
+                Some(Sample {
+                    pixel,
+                    hit,
+                    optical_surface,
+                })
             });
         self.samples.borrow_mut().insert(key, sample);
         sample
     }
     fn surface(&self, pixel: [f64; 2]) -> Option<SurfaceHit> {
+        if self.cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
+        if self.atmosphere.is_some() {
+            return self.sample(pixel)?.optical_surface;
+        }
         let direction = self.viewport.direction(self.frame, self.lens, pixel)?;
         let ray = Ray {
             origin: self.frame.origin,
             direction,
         };
-        if let Some(profile) = self.atmosphere {
-            profile.trace(ray, self.scene).ok()?.surface
-        } else {
-            self.scene.intersect(ray)
-        }
+        self.scene.intersect(ray)
     }
     fn resolved(&self, boundary: Boundary) -> Option<HorizonPoint> {
         Some(HorizonPoint {
@@ -195,20 +224,40 @@ impl Search<'_> {
         result
     }
     fn refine_extreme(&self, mut best: Boundary, axis: usize, minimize: bool) -> Boundary {
+        // A detected crossing on this viewport edge is already the clipped
+        // extremum; searching beyond it cannot improve a visible endpoint.
+        if (minimize && best.pixel[axis] == 0.0)
+            || (!minimize && best.pixel[axis] == self.viewport.pixels[axis])
+        {
+            return best;
+        }
+        let columns = if self.atmosphere.is_some() {
+            OPTICAL_COLUMNS
+        } else {
+            COLUMNS
+        };
+        let rows = if self.atmosphere.is_some() {
+            OPTICAL_ROWS
+        } else {
+            ROWS
+        };
         let tangent_axis = 1 - axis;
         let mut step = self.viewport.pixels[tangent_axis]
             / if tangent_axis == 0 {
-                COLUMNS as f64
+                columns as f64
             } else {
-                ROWS as f64
+                rows as f64
             };
         let span = self.viewport.pixels[axis]
             / if axis == 0 {
-                COLUMNS as f64
+                columns as f64
             } else {
-                ROWS as f64
+                rows as f64
             };
-        for _ in 0..12 {
+        for _ in 0..if self.atmosphere.is_some() { 4 } else { 12 } {
+            if self.cancelled.load(Ordering::Relaxed) {
+                break;
+            }
             for sign in [-1.0, 1.0] {
                 let mut a = best.pixel;
                 a[tangent_axis] += sign * step;
@@ -238,8 +287,8 @@ fn pixel_distance(a: [f64; 2], b: [f64; 2]) -> f64 {
 
 impl HorizonProfile {
     /// Find the visible canonical Earth outline, excluding grass, bodies and UI.
-    /// Coarse screen cells can miss isolated narrow features; no global maximum
-    /// guarantee is inferred from the much smaller local bisection bracket.
+    /// Smooth Earth uses its analytic tangent contour; archived terrain retains
+    /// a finite screen search with no global-maximum guarantee.
     pub fn measure(
         scene: &TerrainScene,
         frame: CameraFrame,
@@ -248,7 +297,7 @@ impl HorizonProfile {
     ) -> Option<Self> {
         Self::measure_with_atmosphere(scene, frame, lens, viewport, None)
     }
-    /// Same finite contour search, using the validated optical profile for each ray.
+    /// Bounded visible-screen search using the validated optical profile.
     pub fn measure_refracted(
         scene: &TerrainScene,
         frame: CameraFrame,
@@ -265,8 +314,41 @@ impl HorizonProfile {
         viewport: GuideViewport,
         atmosphere: Option<&crate::atmosphere::AtmosphereProfile>,
     ) -> Option<Self> {
+        Self::measure_cancellable(scene, frame, lens, viewport, atmosphere, &NEVER_CANCELLED)
+    }
+    /// Cancellation is checked between queries. An individual bounded optical
+    /// trace is allowed to finish; a cancelled result is never published.
+    pub fn measure_cancellable(
+        scene: &TerrainScene,
+        frame: CameraFrame,
+        lens: Lens,
+        viewport: GuideViewport,
+        atmosphere: Option<&crate::atmosphere::AtmosphereProfile>,
+        cancelled: &AtomicBool,
+    ) -> Option<Self> {
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         if !frame.origin.is_finite() {
             return None;
+        }
+        if atmosphere.is_none() && (scene.is_boundary_only() || scene.patches().is_empty()) {
+            let points = analytic::TangentContour::new(frame, lens, viewport)?.points(scene, None);
+            let apex = *points
+                .iter()
+                .min_by(|a, b| a.pixel[1].total_cmp(&b.pixel[1]))?;
+            let left = *points
+                .iter()
+                .min_by(|a, b| a.pixel[0].total_cmp(&b.pixel[0]))?;
+            let right = *points
+                .iter()
+                .max_by(|a, b| a.pixel[0].total_cmp(&b.pixel[0]))?;
+            if cancelled.load(Ordering::Relaxed) {
+                return None;
+            }
+            return Some(Self::from_points(
+                apex, left, right, viewport, frame, lens, None, [0.0; 2],
+            ));
         }
         let search = Search {
             scene,
@@ -275,15 +357,30 @@ impl HorizonProfile {
             lens,
             viewport,
             samples: RefCell::default(),
+            cancelled,
+            queries: Cell::new(0),
+        };
+        let columns = if atmosphere.is_some() {
+            OPTICAL_COLUMNS
+        } else {
+            COLUMNS
+        };
+        let rows = if atmosphere.is_some() {
+            OPTICAL_ROWS
+        } else {
+            ROWS
         };
         let mut points = Vec::new();
-        let mut previous_row = vec![None; COLUMNS + 1];
-        for row in 0..=ROWS {
+        let mut previous_row = vec![None; columns + 1];
+        for row in 0..=rows {
+            if cancelled.load(Ordering::Relaxed) {
+                return None;
+            }
             let mut previous = None;
             for (column, above) in previous_row.iter_mut().enumerate() {
                 let sample = search.sample([
-                    viewport.pixels[0] * column as f64 / COLUMNS as f64,
-                    viewport.pixels[1] * row as f64 / ROWS as f64,
+                    viewport.pixels[0] * column as f64 / columns as f64,
+                    viewport.pixels[1] * row as f64 / rows as f64,
                 ]);
                 for neighbor in [previous, *above] {
                     if let (Some(a), Some(b)) = (neighbor, sample)
@@ -301,6 +398,9 @@ impl HorizonProfile {
         let mut summits: Vec<[f64; 2]> = Vec::with_capacity(8);
         for patch in scene.patches().iter().filter(|_| !scene.is_boundary_only()) {
             for &vertex in patch.canonical_vertices() {
+                if cancelled.load(Ordering::Relaxed) {
+                    return None;
+                }
                 if let Some(pixel) = viewport.project(frame, lens, vertex)
                     && (summits.len() < 8 || pixel[1] < summits[7][1])
                 {
@@ -310,7 +410,7 @@ impl HorizonProfile {
                 }
             }
         }
-        let vertical_step = viewport.pixels[1] / ROWS as f64;
+        let vertical_step = viewport.pixels[1] / rows as f64;
         for summit in summits {
             points.extend(search.segment_boundaries(
                 [summit[0], (summit[1] - vertical_step).max(0.0)],
@@ -330,12 +430,37 @@ impl HorizonProfile {
         let apex = search.resolved(search.refine_extreme(apex, 1, true))?;
         let left = search.resolved(search.refine_extreme(left, 0, true))?;
         let right = search.resolved(search.refine_extreme(right, 0, false))?;
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
+        Some(Self::from_points(
+            apex,
+            left,
+            right,
+            viewport,
+            frame,
+            lens,
+            atmosphere,
+            [viewport.pixels[0] / columns as f64, vertical_step],
+        ))
+    }
+    #[allow(clippy::too_many_arguments)]
+    fn from_points(
+        apex: HorizonPoint,
+        left: HorizonPoint,
+        right: HorizonPoint,
+        viewport: GuideViewport,
+        frame: CameraFrame,
+        lens: Lens,
+        atmosphere: Option<&crate::atmosphere::AtmosphereProfile>,
+        coarse_spacing_pixels: [f64; 2],
+    ) -> Self {
         let chord_width_m = (right.pixel[0] - left.pixel[0] > BRACKET_PIXELS)
             .then(|| left.hit.hit.position.distance(right.hit.hit.position));
         let surface_width_m = chord_width_m.and_then(|_| {
             crate::wgs84_surface_distance(left.hit.hit.geodetic, right.hit.hit.geodetic).ok()
         });
-        Some(Self {
+        Self {
             apex,
             left,
             right,
@@ -344,9 +469,9 @@ impl HorizonProfile {
             viewport,
             frame,
             lens,
-            coarse_spacing_pixels: [viewport.pixels[0] / COLUMNS as f64, vertical_step],
+            coarse_spacing_pixels,
             atmosphere: atmosphere.cloned(),
-        })
+        }
     }
     pub fn ruler(&self, scene: &TerrainScene, column: f64) -> Option<GuideRuler> {
         self.ruler_with_atmosphere(scene, column, self.atmosphere.as_ref())
@@ -365,6 +490,18 @@ impl HorizonProfile {
         column: f64,
         atmosphere: Option<&crate::atmosphere::AtmosphereProfile>,
     ) -> Option<GuideRuler> {
+        self.ruler_cancellable(scene, column, atmosphere, &NEVER_CANCELLED)
+    }
+    pub fn ruler_cancellable(
+        &self,
+        scene: &TerrainScene,
+        column: f64,
+        atmosphere: Option<&crate::atmosphere::AtmosphereProfile>,
+        cancelled: &AtomicBool,
+    ) -> Option<GuideRuler> {
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         if self.atmosphere.as_ref().map(|profile| profile.layers())
             != atmosphere.map(|profile| profile.layers())
         {
@@ -381,9 +518,14 @@ impl HorizonProfile {
             lens: self.lens,
             viewport: self.viewport,
             samples: RefCell::default(),
+            cancelled,
+            queries: Cell::new(0),
         };
-        let mut rows: Vec<f64> = (0..=128)
-            .map(|row| self.viewport.pixels[1] * row as f64 / 128.0)
+        let analytic =
+            atmosphere.is_none() && (scene.is_boundary_only() || scene.patches().is_empty());
+        let intervals = if atmosphere.is_some() { 16 } else { 128 };
+        let mut rows: Vec<f64> = (0..=intervals)
+            .map(|row| self.viewport.pixels[1] * row as f64 / intervals as f64)
             .collect();
         // A thin terrain band may fall between coarse rows. Probe the known
         // global summit's height explicitly; every seed still needs a real
@@ -395,7 +537,7 @@ impl HorizonProfile {
         rows.dedup();
         let mut previous: Option<Sample> = None;
         let mut ground = None;
-        for row in rows {
+        for row in rows.into_iter().filter(|_| !analytic) {
             let current = search.sample([x, row]);
             if let (Some(sky), Some(earth)) = (previous, current)
                 && !sky.hit
@@ -406,10 +548,20 @@ impl HorizonProfile {
             }
             previous = current;
         }
-        let mut ground = search.resolved(ground?)?;
+        let mut ground = if analytic {
+            // Select a sky-to-Earth crossing, not a lower Earth-to-sky limb.
+            let contour = analytic::TangentContour::new(self.frame, self.lens, self.viewport)?;
+            contour
+                .points(scene, Some(column))
+                .into_iter()
+                .filter(|point| contour.sky_to_earth(*point))
+                .min_by(|a, b| a.pixel[1].total_cmp(&b.pixel[1]))?
+        } else {
+            search.resolved(ground?)?
+        };
         // A different column may reveal a missed summit above the sampled apex.
         // Never draw a reversed ruler or silently promote it to a global bound.
-        if ground.pixel[1] < self.apex.pixel[1] {
+        if ground.pixel[1] < self.apex.pixel[1] && !analytic {
             let expanded = ground.bracket_pixels + self.apex.pixel[1] - ground.pixel[1];
             if expanded > BRACKET_PIXELS {
                 return None;
@@ -424,14 +576,37 @@ impl HorizonProfile {
                 bracket_pixels: expanded,
             };
         }
+        if atmosphere.is_some() && ground.pixel[1] >= self.apex.pixel[1] {
+            let difference = ground.pixel[1] - self.apex.pixel[1];
+            // If the guide lies inside this column's existing miss/hit bracket,
+            // an actual hit on that exact launch ray can shorten the bracket.
+            // Overlapping uncertainty intervals alone never imply zero gap.
+            if difference <= ground.bracket_pixels {
+                let pixel = [x, self.apex.pixel[1]];
+                if let Some(hit) = search.surface(pixel) {
+                    ground = HorizonPoint {
+                        pixel,
+                        hit,
+                        bracket_pixels: ground.bracket_pixels - difference,
+                    };
+                }
+            }
+        }
         let top_pixel = [x, self.apex.pixel[1]];
+        if cancelled.load(Ordering::Relaxed) {
+            return None;
+        }
         let direction = self.viewport.direction(self.frame, self.lens, top_pixel)?;
         let depth = (ground.hit.hit.position - self.frame.origin).dot(self.frame.forward);
         let denominator = direction.dot(self.frame.forward);
         if depth <= 0.0 || denominator <= 1e-10 {
             return None;
         }
-        let reference_ecef_m = if let Some(profile) = atmosphere {
+        let reference_ecef_m = if top_pixel == ground.pixel {
+            // Same launch ray and measured endpoint: its first surface hit
+            // lies on the defining plane, without a second numerical trace.
+            ground.hit.hit.position
+        } else if let Some(profile) = atmosphere {
             profile
                 .trace_to_plane(
                     Ray {
@@ -448,6 +623,9 @@ impl HorizonProfile {
         };
         let view_plane_gap_m = reference_ecef_m.distance(ground.hit.hit.position);
         if !view_plane_gap_m.is_finite() {
+            return None;
+        }
+        if cancelled.load(Ordering::Relaxed) {
             return None;
         }
         Some(GuideRuler {

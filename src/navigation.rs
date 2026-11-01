@@ -1,4 +1,9 @@
 //! Renderer-independent application navigation state.
+use earth_math::astro::{
+    AstroInstant, AstronomyFrame,
+    aim::{BodyAimError, BodyTracking, ViewBody},
+};
+use earth_math::navigation::FlightSettings;
 use earth_math::{EyePosture, Geodetic, Lens, Observer, Projection, TerrainScene, UnitSystem};
 
 #[cfg_attr(feature = "desktop", derive(bevy::prelude::Resource))]
@@ -10,7 +15,13 @@ pub struct Explorer {
     pub telescope: bool,
     pub units: UnitSystem,
     pub show_panel: bool,
+    pub show_sight_panel: bool,
+    pub show_help_panel: bool,
+    pub show_body_info: bool,
     pub show_ui: bool,
+    pub show_tooltips: bool,
+    pub body_tracking: BodyTracking,
+    pub horizon_lock_enabled: bool,
     pub grass_enabled: bool,
     pub show_licenses: bool,
     pub show_horizontal_line: bool,
@@ -24,7 +35,12 @@ pub struct Explorer {
     pub quality: usize,
     pub status: String,
     pub looking: bool,
+    pub flight_settings: FlightSettings,
+    /// Current navigation speed, evaluated by the mathematical flight controller.
+    pub flight_speed_mps: f64,
     pub boundaries_enabled: bool,
+    /// Optional deterministic presentation clock for native star verification.
+    pub star_phase_seconds: Option<f64>,
 }
 
 impl Default for Explorer {
@@ -37,13 +53,19 @@ impl Default for Explorer {
             normal_lens: Lens::default(),
             telescope_lens: Lens::new(Projection::Rectilinear, 5.0),
             telescope: false,
-            units: UnitSystem::Metric,
+            units: UnitSystem::Imperial,
             show_panel: true,
+            show_sight_panel: true,
+            show_help_panel: true,
+            show_body_info: false,
             show_ui: true,
+            show_tooltips: true,
+            body_tracking: BodyTracking::default(),
+            horizon_lock_enabled: true,
             grass_enabled: true,
             show_licenses: false,
             show_horizontal_line: false,
-            show_vertical_line: false,
+            show_vertical_line: true,
             guide_column: 0.5,
             follow_earth: true,
             crouch_locked: false,
@@ -53,12 +75,78 @@ impl Default for Explorer {
             quality: 1,
             status: "Enter WGS84 coordinates or fly to explore the smooth Earth surface.".into(),
             looking: false,
+            flight_settings: FlightSettings::default(),
+            flight_speed_mps: observer.speed_mps,
             boundaries_enabled: true,
+            star_phase_seconds: None,
         }
     }
 }
 
 impl Explorer {
+    pub fn horizon_lock_active(&self) -> bool {
+        earth_math::navigation::horizon_lock_active(self.observer, self.horizon_lock_enabled)
+    }
+
+    pub fn set_horizon_lock(&mut self, enabled: bool) {
+        self.horizon_lock_enabled = enabled;
+        self.apply_horizon_lock();
+    }
+
+    pub fn apply_horizon_lock(&mut self) -> bool {
+        earth_math::navigation::enforce_horizon_lock(&mut self.observer, self.horizon_lock_enabled)
+    }
+
+    pub fn cancel_body_tracking(&mut self) {
+        self.body_tracking.cancel();
+    }
+
+    pub fn aim_body(
+        &mut self,
+        body: ViewBody,
+        frame: Option<&AstronomyFrame>,
+        instant: AstroInstant,
+    ) -> Result<(), BodyAimError> {
+        self.body_tracking
+            .aim_once(body, &mut self.observer, frame, instant, self.follow_earth)?;
+        self.apply_horizon_lock();
+        self.status = format!("Aimed at {}. Position and lens unchanged.", body.label());
+        Ok(())
+    }
+
+    pub fn toggle_body_tracking(
+        &mut self,
+        body: ViewBody,
+        frame: Option<&AstronomyFrame>,
+        instant: AstroInstant,
+    ) -> Result<(), BodyAimError> {
+        self.body_tracking
+            .toggle(body, &mut self.observer, frame, instant, self.follow_earth)?;
+        self.apply_horizon_lock();
+        self.status = if self.body_tracking.target().is_some() {
+            format!(
+                "Tracking {}. Manual look or roll releases tracking.",
+                body.label()
+            )
+        } else {
+            format!("Released {} tracking.", body.label())
+        };
+        Ok(())
+    }
+
+    pub fn reset_view(&mut self) {
+        self.telescope = false;
+        self.normal_lens = Lens::default();
+        self.status = "Normal view restored to defaults.".into();
+    }
+
+    pub fn set_horizontal_line(&mut self, enabled: bool) {
+        self.show_horizontal_line = enabled;
+        if enabled {
+            self.show_vertical_line = true;
+        }
+    }
+
     pub fn lens(&self) -> Lens {
         if self.telescope {
             self.telescope_lens
@@ -75,6 +163,8 @@ impl Explorer {
                     return;
                 }
                 self.observer = observer;
+                self.cancel_body_tracking();
+                self.apply_horizon_lock();
                 self.boundaries_enabled = true;
                 self.telescope = false;
                 self.normal_lens = Lens::default();
@@ -94,6 +184,7 @@ impl Explorer {
             self.posture.crouched = previous;
             self.status = error.to_string();
         }
+        self.apply_horizon_lock();
     }
 
     pub fn set_standing_eye_height(&mut self, metres: f64) {
@@ -103,6 +194,7 @@ impl Explorer {
             self.posture = previous;
             self.status = error.to_string();
         }
+        self.apply_horizon_lock();
     }
 
     pub fn set_crouching_eye_height(&mut self, metres: f64) {
@@ -112,6 +204,7 @@ impl Explorer {
             self.posture = previous;
             self.status = error.to_string();
         }
+        self.apply_horizon_lock();
     }
 
     pub fn visit_coordinates(&mut self) {
@@ -128,6 +221,8 @@ impl Explorer {
                 {
                     Ok(()) => {
                         self.observer = observer;
+                        self.cancel_body_tracking();
+                        self.apply_horizon_lock();
                         self.status =
                             "Arrived at the entered latitude, longitude and feet height.".into();
                     }
@@ -142,10 +237,11 @@ impl Explorer {
         let location = self.observer.feet;
         match surface.place_on_ground(&mut self.observer, location) {
             Ok(()) => {
+                self.cancel_body_tracking();
                 self.latitude = self.observer.feet.lat_deg;
                 self.longitude = self.observer.feet.lon_deg;
                 self.altitude_m = self.observer.feet.height_m;
-                self.status = "Standing on the active ground surface.".into();
+                self.status = "Standing upright and level on the active ground surface.".into();
             }
             Err(error) => self.status = error.to_string(),
         }
@@ -155,6 +251,7 @@ impl Explorer {
         match Geodetic::new(self.latitude, self.longitude, 0.0) {
             Ok(location) => match surface.place_on_ground(&mut self.observer, location) {
                 Ok(()) => {
+                    self.cancel_body_tracking();
                     self.altitude_m = self.observer.feet.height_m;
                     self.status = "At the entered latitude/longitude on the ground surface.".into();
                 }

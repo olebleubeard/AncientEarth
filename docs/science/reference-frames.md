@@ -1,6 +1,6 @@
 # Following Earth and holding a nonrotating view
 
-**Current smooth-surface update:** runtime collision uses only WGS84 h=0. Regional category/display vertices are excluded from physical clearance calculations; the conservative all-rotation bound below therefore uses radius a. References to terrain vertices describe the retained historical terrain branch, not current assets.
+**Selected surface:** smooth-mode collision uses WGS84 h=0, excluding regional category/display vertices from physical clearance; its conservative all-rotation bound uses radius a. Optional [downloaded terrain](topography.md) activates the actual canonical terrain-vertex bound and collision checks below. Terrain can move beneath an unlocked observer; a rejected step follows the documented recovery instead of silently placing the observer inside the surface.
 
 **F9 changes the observer's reference-frame constraint.** With following enabled, the feet and camera axes stay fixed in Earth-fixed coordinates while astronomical time advances. With following disabled, the eye and full camera orientation stay fixed in **Earth-centered, ICRF-oriented, nonrotating axes**. Earth can turn underneath that view. F9 again retains the currently displayed position and orientation and makes them Earth-fixed.
 
@@ -44,7 +44,7 @@ U = U0 cos(r) + R0 sin(r)
 
 The application's order is user interface, navigation, astronomical transport, then rendering. A mouse-look, flight, crouch or ordinary coordinate/ground navigation edit is interpreted at the **last displayed** epoch, even when a calendar edit has already requested a different time. The tracker captures the edited pose with that old matrix, then transports it to the requested new epoch. Crouching first moves the eyes along local vertical while preserving feet, then establishes that new eye anchor. Standing headroom and supported coordinate bounds remain enforced.
 
-A combined eclipse date/location preset explicitly commits a new pose and time together and reanchors with the new matrix. Startup command-line choices do likewise. This avoids accidentally transporting a newly loaded location from an unrelated old date. Relocking preserves the current ECEF position and full triad; it does not force roll to zero or snap the view to a geographic heading.
+Explicit startup date-and-position choices commit a new pose and time together and reanchor with the new matrix. This avoids accidentally transporting a newly loaded location from an unrelated old date. Relocking preserves the current ECEF position and full triad; it does not force roll to zero or snap the view to a geographic heading.
 
 ## Surface checks and large jumps
 
@@ -63,8 +63,14 @@ The ellipsoid lies in the radius-`a` ball. Every terrain triangle lies in the ba
 
 ## Apparent astronomy and velocity
 
-Unlocked eye positions still supply topocentric parallax and light-time reception coordinates. Their held geocentric velocity is zero, so their aberration velocity is Earth's barycentric translational velocity. Locked eyes additionally use the existing terrestrial spin approximation. Artificial navigation speeds are not physical relativistic boosts.
+Unlocked eye positions still supply topocentric parallax and light-time reception coordinates. Their held geocentric velocity is zero, so their aberration velocity is Earth's barycentric translational velocity. Locked inspection eyes additionally use terrestrial spin at a WGS84 h=0 reference point with the eye's geodetic latitude/longitude. The bounded surface-reference velocity is an explicit imaging convention, not the derivative of the virtual eye trajectory; actual eye position still determines light time and parallax. Artificial navigation speeds are not physical relativistic boosts.
 
-The Sun/Moon apparent spheres and observer eclipse readout use the selected eye-motion convention. The separate eclipse field for ground and grass retains co-rotating surface velocities, since those receivers rotate with Earth even when the camera does not. Switching F9 changes the assumed observer velocity instantly; a small aberrational change of celestial apparent direction is therefore possible despite continuous camera pose. This is a constraint switch, not a simulated acceleration maneuver.
+The Sun/Moon apparent spheres and observer eclipse readout use the selected eye-motion convention. The separate eclipse field for ground and grass retains co-rotating surface velocities, since those receivers rotate with Earth even when the camera does not. Switching F9 changes the assumed observer velocity instantly; an aberrational change of celestial apparent direction is therefore possible despite continuous camera pose. The runtime reference spin stays bounded by approximately 465.1 m/s at every flight height. The scientific raw sampling API retains actual-eye co-rotation separately, but runtime inspection never extrapolates that virtual spin velocity to astronomical units. This is a constraint switch, not a simulated acceleration maneuver.
 
 Implementation: [`reference_frames.rs`](../../crates/earth-math/src/astro/reference_frames.rs), [`lib.rs`](../../crates/earth-math/src/lib.rs), and [`bodies.rs`](../../crates/earth-math/src/astro/bodies.rs). Independent regression cases are recorded in [verification.md](verification.md).
+
+The former parked inspection-camera exception is removed. [Continuous flight](continuous-flight.md), orbit annotations, date jumps and playback all retain the same authoritative observer and the same tracking checks. High-range coordinate roundoff is independently tested; it does not relax surface-clearance or physical-source accuracy claims.
+
+## Optional local-upright constraint
+
+The default [horizon roll lock](horizon-lock.md) has final bank precedence through its declared 100 km ellipsoidal-eye-height boundary. After nonrotating transport and any selected body aim, it sets roll to zero without changing the accepted eye or forward direction, then reanchors the resulting full axes at that epoch. Consequently F9 with this lock active preserves nonrotating position/forward but does not preserve fully inertial camera-up. Disable the lock for the unconstrained full-orientation behavior derived above. It does not change the reference-frame collision or rollback policy.

@@ -25,9 +25,24 @@ pub fn boundary_scene_meshes(
     local: LocalFrame,
     focal: f64,
 ) -> BoundaryMeshes {
+    boundary_scene_meshes_with_detail(
+        scene,
+        local,
+        focal,
+        super::continuous::ReferenceDetail::near(local.origin),
+    )
+}
+
+/// Coordinate origin and reference-surface detail eye are independent.
+pub fn boundary_scene_meshes_with_detail(
+    scene: &TerrainScene,
+    local: LocalFrame,
+    focal: f64,
+    detail: super::continuous::ReferenceDetail,
+) -> BoundaryMeshes {
     if !scene.is_boundary_only() {
         return BoundaryMeshes {
-            reference: reference_mesh_impl(scene, local, focal, None),
+            reference: reference_mesh_impl(scene, local, focal, detail, None),
             regions: scene
                 .patches()
                 .iter()
@@ -59,7 +74,7 @@ pub fn boundary_scene_meshes(
                 .collect()
         })
         .collect();
-    let reference = reference_mesh_impl(scene, local, focal, Some(&mut edges));
+    let reference = reference_mesh_impl(scene, local, focal, detail, Some(&mut edges));
     let regions = scene
         .patches()
         .iter()

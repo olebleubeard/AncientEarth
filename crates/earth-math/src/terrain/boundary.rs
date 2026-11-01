@@ -168,7 +168,7 @@ impl TerrainPatch {
             .ok()
     }
 
-    fn boundary_class(&self, location: Geodetic) -> Option<u8> {
+    pub(super) fn boundary_class(&self, location: Geodetic) -> Option<u8> {
         let data = self.boundary.as_ref()?;
         let [west, south, east, north] = self.bounds();
         if location.lon_deg < west
@@ -218,6 +218,9 @@ impl TerrainScene {
         Ok(Self {
             patches,
             boundary_only: true,
+            classification: None,
+            water_masks: None,
+            global_land_mask: None,
         })
     }
     pub fn is_boundary_only(&self) -> bool {
@@ -225,23 +228,21 @@ impl TerrainScene {
     }
 
     pub(super) fn classify_ellipsoid_hit(&self, hit: RayHit) -> SurfaceHit {
-        for (index, patch) in self.patches.iter().enumerate() {
-            if let Some(code) = patch.boundary_class(hit.geodetic) {
-                if code == 4 {
-                    return SurfaceHit {
-                        hit,
-                        kind: SurfaceKind::ReferenceEllipsoid,
-                        grass_allowed: false,
-                    };
-                }
+        if let Some((index, code)) = self.category(hit.geodetic) {
+            if code == 4 {
                 return SurfaceHit {
                     hit,
-                    kind: WaterKind::from_code(code).map_or(SurfaceKind::Terrain(index), |kind| {
-                        SurfaceKind::Water { patch: index, kind }
-                    }),
-                    grass_allowed: code == 0,
+                    kind: SurfaceKind::ReferenceEllipsoid,
+                    grass_allowed: false,
                 };
             }
+            return SurfaceHit {
+                hit,
+                kind: WaterKind::from_code(code).map_or(SurfaceKind::Terrain(index), |kind| {
+                    SurfaceKind::Water { patch: index, kind }
+                }),
+                grass_allowed: code == 0,
+            };
         }
         SurfaceHit {
             hit,

@@ -3,6 +3,44 @@ use super::*;
 use crate::astro::AstroInstant;
 use grib::LatLons;
 use std::{collections::BTreeMap, io::Cursor};
+pub mod custom;
+pub mod hrrr;
+pub use custom::{CustomWeatherDraft, CustomWeatherRow};
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct WeatherSample {
+    pub height_m: f64,
+    pub temperature_k: f64,
+    pub pressure_pa: f64,
+    pub specific_humidity: f64,
+}
+#[derive(Clone, Copy, Debug)]
+pub enum WeatherGrid {
+    Gfs,
+    Hrrr { grid_x: u32, grid_y: u32 },
+}
+#[derive(Clone, Debug)]
+pub struct WeatherRequest {
+    pub key: String,
+    pub url: String,
+    pub gfs: GfsRequest,
+    pub hrrr: Option<hrrr::HrrrRequest>,
+}
+impl WeatherRequest {
+    pub fn matches_location(&self, location: Geodetic) -> bool {
+        self.hrrr.as_ref().map_or_else(
+            || self.gfs.matches_location(location),
+            |r| r.matches_location(location),
+        )
+    }
+}
+#[derive(Clone, Debug)]
+pub struct WeatherProfile {
+    pub profile: AtmosphereProfile,
+    pub metadata: WeatherMetadata,
+    pub request: WeatherRequest,
+    pub regional_fallback: Option<String>,
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct GfsRequest {
@@ -16,6 +54,10 @@ pub struct GfsRequest {
 }
 #[derive(Clone, Debug)]
 pub struct WeatherMetadata {
+    /// Original provider metadata for a user-edited column. The outer source
+    /// is custom; this boxed original is provenance, not current observations.
+    pub custom_origin: Option<Box<WeatherMetadata>>,
+    pub source_grid: WeatherGrid,
     pub source: String,
     pub model: String,
     pub source_url: String,
@@ -29,12 +71,37 @@ pub struct WeatherMetadata {
     pub specific_humidity_2m: f64,
     pub source_levels: usize,
     pub extrapolated_refractivity: bool,
+    pub temperature_80m_k: Option<f64>,
+    pub pressure_80m_pa: Option<f64>,
+    pub specific_humidity_80m: Option<f64>,
+    pub secondary_source_url: Option<String>,
+    pub vertical_input_description: String,
+    pub cross_model_join: Option<WeatherJoin>,
+}
+/// Auditable cross-model registration. These limits are application policy,
+/// not a claim that accepted columns reproduce a measured inversion.
+pub const MAX_PROVIDER_GROUND_OFFSET_M: f64 = 100.0;
+pub const MAX_FIRST_GLOBAL_JOIN_HEIGHT_M: f64 = 200.0;
+pub const MIN_CROSS_MODEL_JOIN_SPAN_M: f64 = 20.0;
+#[derive(Clone, Copy, Debug)]
+pub struct WeatherJoin {
+    pub gfs_surface_geopotential_m: f64,
+    pub gfs_cycle_unix_seconds: i64,
+    pub provider_ground_offset_m: f64,
+    pub first_global_height_m: f64,
+    pub join_span_m: f64,
 }
 impl WeatherMetadata {
     /// Friendly source-condition display; unit conversion and rounding do not
     /// change the profile or imply weather measurement precision. Specific
     /// humidity remains mass fraction, never mislabeled as relative humidity.
     pub fn surface_conditions_label(&self, units: UnitSystem) -> String {
+        if self.custom_origin.is_some() {
+            return format!(
+                "Custom column: {} editable levels; temperature, pressure and specific humidity are user-defined.",
+                self.source_levels
+            );
+        }
         let celsius = self.temperature_2m_k - 273.15;
         let (temperature, symbol) = match units {
             UnitSystem::Metric => (celsius, "°C"),
@@ -47,11 +114,15 @@ impl WeatherMetadata {
         )
     }
     pub fn usable_at(&self, location: Geodetic, now_unix_seconds: f64) -> bool {
-        let Ok((lat, lon)) = grid_point(location.lat_deg, location.lon_deg) else {
-            return false;
+        let same_grid = match self.source_grid {
+            WeatherGrid::Gfs => grid_point(location.lat_deg, location.lon_deg)
+                .is_ok_and(|(lat, lon)| lat == self.latitude_deg && lon == self.longitude_deg),
+            WeatherGrid::Hrrr { grid_x, grid_y } => {
+                hrrr::grid_point(location.lat_deg, location.lon_deg)
+                    .is_ok_and(|p| (p.0, p.1) == (grid_x, grid_y))
+            }
         };
-        lat == self.latitude_deg
-            && lon == self.longitude_deg
+        same_grid
             && now_unix_seconds.is_finite()
             && (now_unix_seconds - self.valid_unix_seconds as f64).abs() <= 10800.0
     }
@@ -71,6 +142,7 @@ pub struct GfsProfile {
     pub profile: AtmosphereProfile,
     pub metadata: WeatherMetadata,
     pub request: GfsRequest,
+    pub samples: Vec<WeatherSample>,
 }
 
 fn grid_point(latitude: f64, longitude: f64) -> Result<(f64, f64), AtmosphereError> {
@@ -139,6 +211,22 @@ pub fn reference_request() -> GfsRequest {
         .expect("fixed valid reference request")
         .remove(0)
 }
+/// Explicit paired NOAA source snapshot; never a live-data fallback.
+pub fn regional_reference_request() -> WeatherRequest {
+    let gfs = request_candidates(29.305549, -94.767015, 1_792_918_800.0)
+        .expect("fixed valid date")
+        .remove(0);
+    let mut hrrr = hrrr::request_candidates(29.305549, -94.767015, 1_792_918_800.0)
+        .expect("fixed HRRR location")
+        .remove(1);
+    hrrr.url="https://nomads.ncep.noaa.gov/cgi-bin/filter_hrrr_2d.pl?file=hrrr.t06z.wrfsfcf03.grib2&lev_surface=on&lev_2_m_above_ground=on&var_TMP=on&var_SPFH=on&var_HGT=on&var_PRES=on&subregion=&leftlon=-94.87&rightlon=-94.67&toplat=29.41&bottomlat=29.21&dir=%2Fhrrr.20261025%2Fconus".into();
+    WeatherRequest {
+        key: format!("{}+{}", hrrr.key, gfs.key),
+        url: gfs.url.clone(),
+        gfs,
+        hrrr: Some(hrrr),
+    }
+}
 
 /// Explicit optical verification pose at the frozen source column. The pitch
 /// lies between independently checked straight and refracted skyline angles;
@@ -159,6 +247,7 @@ struct Sample {
     temperature: Option<f64>,
     humidity: Option<f64>,
     height: Option<f64>,
+    pressure: Option<f64>,
 }
 fn rejected(message: impl Into<String>) -> AtmosphereError {
     AtmosphereError::InvalidWeather(message.into())
@@ -181,6 +270,7 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
     let mut levels = BTreeMap::<u32, Sample>::new();
     let mut surface = Sample::default();
     let mut air = Sample::default();
+    let mut air80 = Sample::default();
     let mut pressure = None;
     for (_, message) in parsed.iter() {
         if message.indicator().discipline != 0 {
@@ -200,7 +290,7 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
         };
         if fixed.surface_type != 100
             && fixed.surface_type != 1
-            && !(fixed.surface_type == 103 && fixed.value() == 2.0)
+            && !(fixed.surface_type == 103 && [2.0, 80.0].contains(&fixed.value()))
         {
             continue;
         }
@@ -264,7 +354,11 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
             }
             levels.entry(p as u32).or_default()
         } else if fixed.surface_type == 103 {
-            &mut air
+            if fixed.value() == 80.0 {
+                &mut air80
+            } else {
+                &mut air
+            }
         } else {
             &mut surface
         };
@@ -272,6 +366,7 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
             (0, 0) => &mut sample.temperature,
             (1, 0) => &mut sample.humidity,
             (3, 5) => &mut sample.height,
+            (3, 0) => &mut sample.pressure,
             _ => continue,
         };
         if slot.replace(value).is_some() {
@@ -302,6 +397,16 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
         (0.0, temperature, pressure, humidity),
         (2.0, temperature, p2, humidity),
     ];
+    let (Some(t80), Some(q80), Some(p80)) = (air80.temperature, air80.humidity, air80.pressure)
+    else {
+        return Err(rejected("complete 80m TMP/SPFH/PRES triplet missing"));
+    };
+    if p80 >= p2 || p80 <= 0.0 {
+        return Err(rejected(
+            "80m pressure inconsistent with source surface pressure",
+        ));
+    }
+    samples.push((80.0, t80, p80, q80));
     for (p, sample) in levels.into_iter().rev() {
         let (Some(t), Some(q), Some(h)) = (sample.temperature, sample.humidity, sample.height)
         else {
@@ -322,8 +427,13 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
         if height > 110000.0 || !height.is_finite() {
             return Err(rejected("pressure level outside altitude mapping"));
         }
-        samples.push((height, t, p as f64, q));
+        // Preserve the explicitly supplied AGL knot when a pressure-level
+        // interpolation happens to register within one centimetre of it.
+        if (height - 80.0).abs() > 0.01 {
+            samples.push((height, t, p as f64, q));
+        }
     }
+    samples.sort_by(|a, b| a.0.total_cmp(&b.0));
     if samples.len() < 12 || samples.last().unwrap().0 < 60000.0 {
         return Err(rejected("insufficient vertical coverage"));
     }
@@ -331,21 +441,20 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
     let extrapolated = samples
         .iter()
         .any(|&(_, t, p, _)| !(233.15..=373.15).contains(&t) || !(80000.0..=120000.0).contains(&p));
-    let mut layers = Vec::new();
-    for &(height, t, p, q) in &samples {
-        layers.push(AtmosphereLayer {
-            height_m: height,
-            refractivity: phase_index(t, p, q, 550.0)? - 1.0,
-        });
-    }
-    // A declared high-altitude continuation closes continuously to vacuum;
-    // it is not an extra weather observation or validated thermosphere model.
-    layers.push(AtmosphereLayer {
-        height_m: 120000.0,
-        refractivity: 0.0,
-    });
-    let mut profile = AtmosphereProfile::from_layers(layers)?;
+    let samples: Vec<_> = samples
+        .into_iter()
+        .map(
+            |(height_m, temperature_k, pressure_pa, specific_humidity)| WeatherSample {
+                height_m,
+                temperature_k,
+                pressure_pa,
+                specific_humidity,
+            },
+        )
+        .collect();
     let metadata = WeatherMetadata {
+        custom_origin: None,
+        source_grid: WeatherGrid::Gfs,
         source: "NOAA NCEP NOMADS".into(),
         model: "GFS 0.25 degree forecast column".into(),
         source_url: request.url.clone(),
@@ -359,11 +468,312 @@ pub fn decode_gfs(bytes: &[u8], request: &GfsRequest) -> Result<GfsProfile, Atmo
         specific_humidity_2m: humidity,
         source_levels,
         extrapolated_refractivity: extrapolated,
+        temperature_80m_k: Some(t80),
+        pressure_80m_pa: Some(p80),
+        specific_humidity_80m: Some(q80),
+        secondary_source_url: None,
+        vertical_input_description:
+            "2m air, actual 80m TMP/SPFH/PRES, pressure levels; fixed column transplant".into(),
+        cross_model_join: None,
     };
-    profile.metadata = Some(metadata.clone());
+    let profile = build_profile(&samples, metadata.clone())?;
     Ok(GfsProfile {
         profile,
         metadata,
         request: request.clone(),
+        samples,
     })
+}
+
+pub fn weather_requests(
+    latitude: f64,
+    longitude: f64,
+    now: f64,
+) -> Result<Vec<WeatherRequest>, AtmosphereError> {
+    let regional = hrrr::request_candidates(latitude, longitude, now).unwrap_or_default();
+    Ok(request_candidates(latitude, longitude, now)?
+        .into_iter()
+        .map(|gfs| {
+            let hrrr = regional
+                .iter()
+                .find(|h| h.valid_unix_seconds == gfs.valid_unix_seconds)
+                .cloned();
+            WeatherRequest {
+                key: hrrr
+                    .as_ref()
+                    .map_or_else(|| gfs.key.clone(), |h| format!("{}+{}", h.key, gfs.key)),
+                url: gfs.url.clone(),
+                gfs,
+                hrrr,
+            }
+        })
+        .collect())
+}
+pub fn decode_weather(
+    gfs_bytes: &[u8],
+    hrrr_bytes: Option<&[u8]>,
+    request: &WeatherRequest,
+) -> Result<WeatherProfile, AtmosphereError> {
+    let global = decode_gfs(gfs_bytes, &request.gfs)?;
+    let composite = || -> Result<AtmosphereProfile, AtmosphereError> {
+        let regional = request
+            .hrrr
+            .as_ref()
+            .ok_or_else(|| rejected("regional column not requested"))?;
+        let bytes = hrrr_bytes.ok_or_else(|| {
+            rejected("regional data unavailable; validated global column retained")
+        })?;
+        let lower = hrrr::decode_hrrr(bytes, regional)?;
+        composite_profile(&global, lower)
+    };
+    if request.hrrr.is_some() {
+        match composite() {
+            Ok(profile) => {
+                return Ok(WeatherProfile {
+                    metadata: profile.metadata.clone().unwrap(),
+                    profile,
+                    request: request.clone(),
+                    regional_fallback: None,
+                });
+            }
+            Err(error) => {
+                return Ok(WeatherProfile {
+                    profile: global.profile,
+                    metadata: global.metadata,
+                    request: request.clone(),
+                    regional_fallback: Some(error.to_string()),
+                });
+            }
+        }
+    }
+    Ok(WeatherProfile {
+        profile: global.profile,
+        metadata: global.metadata,
+        request: request.clone(),
+        regional_fallback: None,
+    })
+}
+
+fn composite_profile(
+    global: &GfsProfile,
+    lower: hrrr::HrrrColumn,
+) -> Result<AtmosphereProfile, AtmosphereError> {
+    if lower.metadata.valid_unix_seconds != global.metadata.valid_unix_seconds {
+        return Err(rejected("regional/global forecast valid times differ"));
+    }
+    let geometric = |h: f64| 6_356_766.0 * h / (6_356_766.0 - h);
+    let offset = geometric(global.metadata.provider_surface_geopotential_m)
+        - geometric(lower.metadata.provider_surface_geopotential_m);
+    if !offset.is_finite() || offset.abs() > MAX_PROVIDER_GROUND_OFFSET_M {
+        return Err(rejected(
+            "provider ground-height difference exceeds the 100m composite policy; global column retained",
+        ));
+    }
+    let mut samples = lower.samples;
+    let top = samples
+        .last()
+        .ok_or_else(|| rejected("empty regional column"))?
+        .height_m;
+    let joined: Vec<_> = global
+        .samples
+        .iter()
+        .filter_map(|sample| {
+            // HRRR owns the lower surface/2m convention. Retaining the competing
+            // synthetic GFS anchors after a small datum offset would invent an
+            // arbitrarily thin cross-model layer. Only actual upper input joins.
+            if sample.height_m <= 2.01 {
+                return None;
+            }
+            let mut registered = *sample;
+            registered.height_m += offset;
+            (registered.height_m > top + 0.01).then_some(registered)
+        })
+        .collect();
+    let first = joined
+        .first()
+        .ok_or_else(|| rejected("no global column above regional source"))?
+        .height_m;
+    if first - top < MIN_CROSS_MODEL_JOIN_SPAN_M {
+        return Err(rejected(
+            "cross-model join is shorter than the 20m composite policy; global column retained",
+        ));
+    }
+    if first > MAX_FIRST_GLOBAL_JOIN_HEIGHT_M {
+        return Err(rejected(
+            "first global join exceeds the 200m composite policy; global column retained",
+        ));
+    }
+    samples.extend(joined);
+    let mut metadata = lower.metadata;
+    metadata.model = "HRRR 3 km near-surface + GFS 0.25 degree vertical column".into();
+    metadata.secondary_source_url = Some(global.request.url.clone());
+    metadata.source_levels = samples.len();
+    metadata.extrapolated_refractivity |= global.metadata.extrapolated_refractivity;
+    metadata.cross_model_join = Some(WeatherJoin {
+        gfs_surface_geopotential_m: global.metadata.provider_surface_geopotential_m,
+        gfs_cycle_unix_seconds: global.metadata.cycle_unix_seconds,
+        provider_ground_offset_m: offset,
+        first_global_height_m: first,
+        join_span_m: first - top,
+    });
+    metadata.vertical_input_description = format!(
+        "HRRR surface/2m; modeled cross-model linear join to GFS at {first:.2}m AGL (span {:.2}m, ground offset {offset:+.2}m); fixed column transplant",
+        first - top
+    );
+    build_profile(&samples, metadata)
+}
+
+pub(crate) fn build_profile(
+    samples: &[WeatherSample],
+    metadata: WeatherMetadata,
+) -> Result<AtmosphereProfile, AtmosphereError> {
+    if samples.len() < 12
+        || samples[0].height_m != 0.0
+        || samples
+            .last()
+            .is_none_or(|s| s.height_m < 60000.0 || s.height_m >= 120000.0)
+        || samples
+            .windows(2)
+            .any(|p| p[1].height_m - p[0].height_m < 0.01 || p[1].pressure_pa >= p[0].pressure_pa)
+    {
+        return Err(rejected(
+            "incomplete/nonmonotonic atmospheric height and pressure registration",
+        ));
+    }
+    let mut layers = Vec::with_capacity(samples.len() + 1);
+    for sample in samples {
+        if !sample.height_m.is_finite() {
+            return Err(rejected("nonfinite source height"));
+        }
+        layers.push(AtmosphereLayer {
+            height_m: sample.height_m,
+            refractivity: phase_index(
+                sample.temperature_k,
+                sample.pressure_pa,
+                sample.specific_humidity,
+                550.0,
+            )? - 1.0,
+        });
+    }
+    layers.push(AtmosphereLayer {
+        height_m: 120000.0,
+        refractivity: 0.0,
+    });
+    let mut profile = AtmosphereProfile::from_layers(layers)?;
+    profile.weather_samples = Some(samples.to_vec());
+    profile.metadata = Some(metadata);
+    Ok(profile)
+}
+
+#[cfg(test)]
+mod join_policy_tests {
+    use super::*;
+    fn columns() -> (GfsProfile, hrrr::HrrrColumn) {
+        let request = regional_reference_request();
+        (
+            decode_gfs(
+                include_bytes!("../../../../assets/weather/gfs-regional-reference.grib2"),
+                &request.gfs,
+            )
+            .unwrap(),
+            hrrr::decode_hrrr(
+                include_bytes!("../../../../assets/weather/hrrr-reference.grib2"),
+                request.hrrr.as_ref().unwrap(),
+            )
+            .unwrap(),
+        )
+    }
+    #[test]
+    fn registered_pair_exposes_actual_join_and_preserves_both_provider_heights() {
+        let (global, regional) = columns();
+        let regional_ground = regional.metadata.provider_surface_geopotential_m;
+        let profile = composite_profile(&global, regional).unwrap();
+        let metadata = profile.metadata.unwrap();
+        let join = metadata.cross_model_join.unwrap();
+        assert_eq!(metadata.provider_surface_geopotential_m, regional_ground);
+        assert_eq!(
+            join.gfs_surface_geopotential_m,
+            global.metadata.provider_surface_geopotential_m
+        );
+        assert_eq!(
+            join.gfs_cycle_unix_seconds,
+            global.metadata.cycle_unix_seconds
+        );
+        assert!(join.provider_ground_offset_m.abs() <= MAX_PROVIDER_GROUND_OFFSET_M);
+        assert!(join.first_global_height_m <= MAX_FIRST_GLOBAL_JOIN_HEIGHT_M);
+        assert!(join.join_span_m >= MIN_CROSS_MODEL_JOIN_SPAN_M);
+        assert!((join.join_span_m - (join.first_global_height_m - 2.0)).abs() < 1e-12);
+        assert!(
+            (join.first_global_height_m - (80.0 + join.provider_ground_offset_m)).abs() < 1e-12,
+            "this source pair's first real upper input is the actual80m triplet"
+        );
+        println!(
+            "Verified source pair: HRRR H={regional_ground:.9}m, GFS H={:.9}m, offset={:.9}m, first GFS={:.9}m, join span={:.9}m",
+            join.gfs_surface_geopotential_m,
+            join.provider_ground_offset_m,
+            join.first_global_height_m,
+            join.join_span_m
+        );
+    }
+    #[test]
+    fn composite_rejects_large_provider_mismatch_and_long_unobserved_join() {
+        let (mut global, regional) = columns();
+        global.metadata.provider_surface_geopotential_m =
+            regional.metadata.provider_surface_geopotential_m + 101.0;
+        assert!(
+            composite_profile(&global, regional)
+                .unwrap_err()
+                .to_string()
+                .contains("100m")
+        );
+        let (mut global, regional) = columns();
+        global.samples.retain(|sample| sample.height_m > 400.0);
+        assert!(
+            composite_profile(&global, regional)
+                .unwrap_err()
+                .to_string()
+                .contains("200m")
+        );
+        let (mut global, regional) = columns();
+        global
+            .samples
+            .iter_mut()
+            .find(|sample| sample.height_m == 80.0)
+            .unwrap()
+            .height_m = 10.0;
+        assert!(
+            composite_profile(&global, regional)
+                .unwrap_err()
+                .to_string()
+                .contains("20m")
+        );
+        let (mut global, regional) = columns();
+        global.metadata.provider_surface_geopotential_m =
+            regional.metadata.provider_surface_geopotential_m;
+        global
+            .samples
+            .iter_mut()
+            .find(|sample| sample.height_m == 80.0)
+            .unwrap()
+            .height_m = 22.0;
+        assert!(
+            composite_profile(&global, regional).is_ok(),
+            "exact20m span is eligible"
+        );
+        let (mut global, regional) = columns();
+        global.metadata.provider_surface_geopotential_m =
+            regional.metadata.provider_surface_geopotential_m;
+        global
+            .samples
+            .iter_mut()
+            .find(|sample| sample.height_m == 80.0)
+            .unwrap()
+            .height_m = f64::from_bits(22.0f64.to_bits() - 1);
+        assert!(
+            composite_profile(&global, regional)
+                .unwrap_err()
+                .to_string()
+                .contains("20m")
+        );
+    }
 }
